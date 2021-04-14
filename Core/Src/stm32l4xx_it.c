@@ -23,6 +23,7 @@
 #include "stm32l4xx_it.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "blecomm.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -60,7 +61,7 @@ extern UART_HandleTypeDef huart2;
 extern TIM_HandleTypeDef htim7;
 
 /* USER CODE BEGIN EV */
-//  uint8_t ch = 2;
+extern  uint8_t chdata;
 /* USER CODE END EV */
 
 /******************************************************************************/
@@ -169,8 +170,9 @@ void USART2_IRQHandler(void)
   /* USER CODE END USART2_IRQn 0 */
   HAL_UART_IRQHandler(&huart2);
   /* USER CODE BEGIN USART2_IRQn 1 */
-
-//  HAL_UART_Receive_IT(&huart2, &ch, 1);
+  HAL_UART_Receive_IT(&huart2, &chdata, 1);
+  /* 将接收到的数据塞进接收数据队列 */
+  BLE_handle_uartirq(chdata);
   /* USER CODE END USART2_IRQn 1 */
 }
 

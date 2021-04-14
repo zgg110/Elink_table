@@ -186,11 +186,11 @@ void SystemClock_Config(void)
 
 /* USER CODE BEGIN 4 */
 /*蓝牙串口回调函数*/
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
-  if(huart == &huart2){
-    BLE_CallBack();
-  }
-}
+//void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
+//  if(huart == &huart2){
+//    BLE_CallBack();
+//  }
+//}
 
 
 /* USER CODE END 4 */

@@ -170,6 +170,7 @@ int Text_param_count(DataType_f dtype, uint8_t *dat, uint32_t datlen,Fontsparam 
    param[edatadd].Textcount = (uint8_t)(edatalen-6)/2;      //文字内容个数
    user_main_info("Text Count,inputdata:0x%02x",param[edatadd].Textcount);
    memcpy(&param[edatadd].Textdata,&dat[10],edatalen-6);    //获取文字内容
+   user_main_info("Text content:%s",param[edatadd].Textdata);
    
    /*将文字解析放到临时的FLASH中*/
    InputTexttoFlash(param[edatadd]);

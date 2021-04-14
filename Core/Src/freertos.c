@@ -26,8 +26,10 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "string.h"
 #include "w25q128.h"
-#include "dataconfig.h"    
+#include "dataconfig.h" 
+#include "blecomm.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -42,7 +44,7 @@
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-
+extern UART_HandleTypeDef huart2;
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
@@ -54,12 +56,12 @@ osThreadId_t getBLETaskHandle;
 const osThreadAttr_t getBLETask_attributes = {
   .name = "getBLETask",
   .priority = (osPriority_t) osPriorityHigh,
-  .stack_size = 256 * 4
+  .stack_size = 256 * 16
 };
-/* Definitions for QueueBLEusartHandle */
-osMessageQueueId_t QueueBLEusartHandleHandle;
-const osMessageQueueAttr_t QueueBLEusartHandle_attributes = {
-  .name = "QueueBLEusartHandle"
+/* Definitions for QueueBLEusart */
+osMessageQueueId_t QueueBLEusartHandle;
+const osMessageQueueAttr_t QueueBLEusart_attributes = {
+  .name = "QueueBLEusart"
 };
 
 /* Private function prototypes -----------------------------------------------*/
@@ -94,8 +96,8 @@ void MX_FREERTOS_Init(void) {
   /* USER CODE END RTOS_TIMERS */
 
   /* Create the queue(s) */
-  /* creation of QueueBLEusartHandle */
-  QueueBLEusartHandleHandle = osMessageQueueNew (300, sizeof(uint8_t), &QueueBLEusartHandle_attributes);
+  /* creation of QueueBLEusart */
+  QueueBLEusartHandle = osMessageQueueNew (300, sizeof(uint8_t), &QueueBLEusart_attributes);
 
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
@@ -121,19 +123,21 @@ void MX_FREERTOS_Init(void) {
 void GetBLETask(void *argument)
 {
   /* USER CODE BEGIN GetBLETask */
+  uint8_t indata;
   uint8_t ebuff;
   uint32_t BLEUart2RxCnt=0;
-  uint8_t  BLEUart2RxData[1124] = {0};  
+  uint8_t  BLEUart2RxData[1124] = {0}; 
+  HAL_UART_Receive_IT(&_BLE_USART, &indata, 1);
   /* Infinite loop */
   while(1)
   {
-    if(osMessageQueueGet(QueueBLEusartHandleHandle, &ebuff, NULL, portMAX_DELAY) == osOK)
+    if(osMessageQueueGet(QueueBLEusartHandle, &ebuff, NULL, portMAX_DELAY) == osOK)
     {
       BLEUart2RxData[BLEUart2RxCnt++] = ebuff;
       while(1)
       {
         /*将获取的数据放入接收字符串中*/        
-        if(osMessageQueueGet(QueueBLEusartHandleHandle, &ebuff, NULL, 300) == osOK)
+        if(osMessageQueueGet(QueueBLEusartHandle, &ebuff, NULL, 200) == osOK)
         {
           BLEUart2RxData[BLEUart2RxCnt++] = ebuff;  
         }  
@@ -141,7 +145,9 @@ void GetBLETask(void *argument)
         {         
           /*接收数据完毕处理相应信息*/
           Rev_DataAnalye(BLEEVENT,BLEUart2RxData,BLEUart2RxCnt);
-         
+          /*清理相关BUFF*/
+          memset(BLEUart2RxData,0,sizeof(BLEUart2RxData));
+          BLEUart2RxCnt = 0;
           break;
         }                
       }      
@@ -152,6 +158,10 @@ void GetBLETask(void *argument)
 
 /* Private application code --------------------------------------------------*/
 /* USER CODE BEGIN Application */
+void BLE_handle_uartirq(char ch)
+{
+  osMessageQueuePut(QueueBLEusartHandle, &ch, NULL, 0);
+}
 
 /* USER CODE END Application */
 
