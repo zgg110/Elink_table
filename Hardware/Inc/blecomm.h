@@ -13,8 +13,7 @@ typedef enum {
     BLEWKUPCONNECT
 }BleWakeup_Flag;
 
-
-
+void BLE_Send_Data(uint8_t *pData, uint16_t Size);
 void BLE_CallBack(void);
 
 

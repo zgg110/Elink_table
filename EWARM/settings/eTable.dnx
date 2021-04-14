@@ -18,7 +18,7 @@
         <LeaveTargetRunning>_ 0</LeaveTargetRunning>
     </StLinkDriver>
     <DebugChecksum>
-        <Checksum>57126226</Checksum>
+        <Checksum>1085429419</Checksum>
     </DebugChecksum>
     <Exceptions>
         <StopOnUncaught>_ 0</StopOnUncaught>
@@ -145,7 +145,9 @@
         <mode>0</mode>
     </DisassembleMode>
     <Breakpoints2>
-        <Count>0</Count>
+        <Bp0>_ 1 "EMUL_CODE" "{$PROJ_DIR$\..\Core\Src\freertos.c}.138.11" 0 0 1 "" 0 "" 0</Bp0>
+        <Bp1>_ 1 "EMUL_CODE" "{$PROJ_DIR$\..\Core\Src\freertos.c}.132.7" 0 0 1 "" 0 "" 0</Bp1>
+        <Count>2</Count>
     </Breakpoints2>
     <Aliases>
         <Count>0</Count>

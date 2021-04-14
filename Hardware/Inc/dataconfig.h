@@ -1,7 +1,7 @@
 #ifndef __DATACONFIG_H
 #define __DATACONFIG_H
 
-// #include "tablesign.h"
+#include "tablesign.h"
 #include "cmsis_os.h"
 
 
@@ -217,27 +217,9 @@ void BLE_Answer_Type(void);
 
 uint32_t Get_pic_Addr(TableFace fac, uint8_t pictil, TableColorType col);
 
-int PicTransQueue_Init(void);
 
-osStatus Getstat_Queue_Event(PICTRANSTAT *stat);
 
-void selfcheckTask(void *argument);
-
-int PicDataQueue_Init(void);
-
-osStatus_t PutPicData_Queue_Event(picDataParm *data);
-
-osStatus GetPicData_Queue_Event(picDataParm *data);
-
-osStatus GetPicDataING_Queue_Event(picDataParm *data);
-
-int Picture_param_write(TableFace fac, uint8_t *dat, uint32_t datlen);
-
-int FinishParamQueue_Init(void);
-
-void Finishput_Queue_Event(void);
-
-osStatus Finishget_Queue_Event(void);
+void Rev_DataAnalye(EXTEVENT pevent, uint8_t *rdata, uint32_t rlen);
 
 #endif
 

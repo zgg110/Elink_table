@@ -60,7 +60,7 @@ extern UART_HandleTypeDef huart2;
 extern TIM_HandleTypeDef htim7;
 
 /* USER CODE BEGIN EV */
-
+//  uint8_t ch = 2;
 /* USER CODE END EV */
 
 /******************************************************************************/
@@ -170,6 +170,7 @@ void USART2_IRQHandler(void)
   HAL_UART_IRQHandler(&huart2);
   /* USER CODE BEGIN USART2_IRQn 1 */
 
+//  HAL_UART_Receive_IT(&huart2, &ch, 1);
   /* USER CODE END USART2_IRQn 1 */
 }
 

@@ -53,10 +53,9 @@ void MX_USART1_UART_Init(void)
 
 void MX_USART2_UART_Init(void)
 {
-  uint8_t uart2RxData = 0;
-  
+  uint8_t usart2data;
   huart2.Instance = USART2;
-  huart2.Init.BaudRate = 115200;
+  huart2.Init.BaudRate = 921600;
   huart2.Init.WordLength = UART_WORDLENGTH_8B;
   huart2.Init.StopBits = UART_STOPBITS_1;
   huart2.Init.Parity = UART_PARITY_NONE;
@@ -69,8 +68,7 @@ void MX_USART2_UART_Init(void)
   {
     Error_Handler();
   }
-  /*初始化完成并未产生中断前运行此函数，保证可以正常产生中断*/
-  HAL_UART_Receive_IT(&huart2, &uart2RxData, 1);
+  HAL_UART_Receive_IT(&_BLE_USART, &usart2data, 1);
 }
 /* USART3 init function */
 

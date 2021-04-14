@@ -58,115 +58,6 @@ extern uint32_t BLEUart2RxCnt;
 // };
 
 
-/*产生事件待处理队列队列，蓝牙串口接收队列*/
-osMessageQueueId_t QueueEventHandle;
-const osMessageQueueAttr_t QueueEvent_attributes = {
-  .name = "QueueEvent"
-};
-
-/*创建文字参数队列，用于执行整面文字布局*/
-osMessageQueueId_t GetParamHandle;
-const osMessageQueueAttr_t GetParam_attributes = {
-  .name = "GetParam"
-};
-
-/*图片传输状态队列*/
-osMessageQueueId_t PicTransHandle;
-const osMessageQueueAttr_t PicTrans_attributes = {
-  .name = "PicTransStat"
-};
-
-/*图片数据队列*/
-osMessageQueueId_t PicDataHandle;
-const osMessageQueueAttr_t PicData_attributes = {
-  .name = "PicDataStat"
-};
-
-/*投屏整体完成队列*/
-osMessageQueueId_t FinishParamHandle;
-const osMessageQueueAttr_t FinishParam_attributes = {
-  .name = "FinishParam"
-};
-
-// /*定义互斥信号量用于锁定接收蓝牙数据的锁死*/
-// osMutexDef( Mutex );
-// osMutexId mutex;
-
-/******************************************************************
- * 函数为初始化队列参数 用于存储文字内容
- * 
- * 返回队列创建是否成功状态   返回1 为创建失败   返回0 为创建成功
- * ****************************************************************/
-int GetParamQueue_Init(void)
-{
-  // Create a queue capable of containing 300 uint8_t values.
-  GetParamHandle = osMessageQueueNew (20, sizeof(Fontsparam), &GetParam_attributes);
-  if( GetParamHandle == NULL )
-  {
-    return 1;// Queue was not created and must not be used.  //可以打开中断或者初始化对应串口
-  }     
-  return 0;
-}
-
-
-/*****************************************************************
- * 
- * 将参数集推入队列中
- * 
- * ***************************************************************/
-void GetParam_Queue_Event(Fontsparam *pardata)
-{
-  osMessageQueuePut(GetParamHandle, pardata, NULL, 100);
-}
-
-
-/********************************************************************************
- * 
- * 删除获取参数队列
- * 
- * ******************************************************************************/
-osStatus_t ParamQueueDelet(void)
-{
-  user_main_info("Param Queue Delete success!");
-  return osMessageQueueDelete(GetParamHandle);
-}
-
-
-/******************************************************************
- * 函数为初始化队列参数 用于表示已经显示整体完成
- * 
- * 返回队列创建是否成功状态   返回1 为创建失败   返回0 为创建成功
- * ****************************************************************/
-int FinishParamQueue_Init(void)
-{
-  // Create a queue capable of containing 300 uint8_t values.
-  FinishParamHandle = osMessageQueueNew(2, sizeof(uint8_t), &FinishParam_attributes);
-  if( FinishParamHandle == NULL )
-  {
-    return 1;// Queue was not created and must not be used.  //可以打开中断或者初始化对应串口
-  }     
-  return 0;
-}
-
-/*****************************************************************
- * 
- * 将参数集推入队列中
- * 
- * ***************************************************************/
-void Finishput_Queue_Event(void)
-{
-  uint8_t sta = 1;
-  osMessageQueuePut(FinishParamHandle, &sta, NULL, 100);
-}
-
-
-osStatus Finishget_Queue_Event(void)
-{
-  uint8_t estat;
-  return osMessageQueueGet(GetParamHandle, &estat, NULL, portMAX_DELAY);
-}
-
-
 
 /******************************************************************
  *
@@ -215,7 +106,7 @@ int Text_param_count(DataType_f dtype, uint8_t *dat, uint32_t datlen,Fontsparam 
 {
    uint32_t edatadd = 0;   
    uint16_t edatalen = 0;  //定义字符字节长度
-   Fontsparam Fparam;
+
    //if(param[*(dat+1)-1] == NULL) memcpy(&param[*(dat+1)-1], &fontdata1, sizeof(Fontsparam));
    /*获取在设备中为第几行数据*/
    edatadd = *(dat+1)-1;
@@ -280,10 +171,8 @@ int Text_param_count(DataType_f dtype, uint8_t *dat, uint32_t datlen,Fontsparam 
    user_main_info("Text Count,inputdata:0x%02x",param[edatadd].Textcount);
    memcpy(&param[edatadd].Textdata,&dat[10],edatalen-6);    //获取文字内容
    
-   memcpy(&Fparam,&param[edatadd],sizeof(Fontsparam));
-   /*将数据放到对应的队列中*/
-   if(GetParamHandle != NULL)
-    GetParam_Queue_Event(&Fparam);
+   /*将文字解析放到临时的FLASH中*/
+   InputTexttoFlash(param[edatadd]);
    /*判断最大段数*/
   //  FrameMaxCont = FrameMaxCont > *(dat+1) ? FrameMaxCont : *(dat+1);   
    nextaddrcount = edatalen + 4;   //获取跳转指针计数
@@ -374,7 +263,7 @@ void Text_param_write(uint8_t *dat, uint32_t datlen)
           fdata.eTextandPic = TextAndPic;
           fdata.Texttableface = pface;
           fdata.Textbackpic = plist;  
-          GetParam_Queue_Event(&fdata);
+//          GetParam_Queue_Event(&fdata);
         }
         else
         {
@@ -389,86 +278,6 @@ void Text_param_write(uint8_t *dat, uint32_t datlen)
     vPortFree(fontdata);
 }
 
-/******************************************************************
- * 函数为初始化图片传输状态队列参数 
- * 
- * 返回队列创建是否成功状态   返回1 为创建失败   返回0 为创建成功
- * ****************************************************************/
-int PicTransQueue_Init(void)
-{
-  // Create a queue capable of containing 300 uint8_t values.
-  PicTransHandle = osMessageQueueNew (50, sizeof(uint8_t), &PicTrans_attributes);
-  if( PicTransHandle == NULL )
-  {
-    return 1;// Queue was not created and must not be used.  //可以打开中断或者初始化对应串口
-  }     
-  return 0;
-}
-
-/*****************************************************************
- * 
- * 将传输状态参数集推入队列中
- * 
- * ***************************************************************/
-void Putstat_Queue_Event(PICTRANSTAT *stat)
-{
-  osMessageQueuePut(PicTransHandle, stat, NULL, 100);
-}
-
-
-/*****************************************************************
- * 
- * 获取传输状态参数
- * 
- * ***************************************************************/
-osStatus Getstat_Queue_Event(PICTRANSTAT *stat)
-{
-  return osMessageQueueGet(PicTransHandle, stat, NULL, 4000);
-}
-
-
-/******************************************************************
- * 函数为初始化图片传输数据队列函数
- * 
- * 返回队列创建是否成功状态   返回1 为创建失败   返回0 为创建成功
- * ****************************************************************/
-int PicDataQueue_Init(void)
-{
-  // Create a queue capable of containing 300 uint8_t values.
-  PicDataHandle = osMessageQueueNew (3, sizeof(picDataParm), &PicData_attributes);
-  if( PicDataHandle == NULL )
-  {
-    return 1;// Queue was not created and must not be used.  //可以打开中断或者初始化对应串口
-  }     
-  return 0;
-}
-
-/*****************************************************************
- * 
- * 将传输数据推入队列中
- * 
- * ***************************************************************/
-osStatus_t PutPicData_Queue_Event(picDataParm *data)
-{
-  return osMessageQueuePut(PicDataHandle, data, NULL, 100);
-}
-
-
-
-/*****************************************************************
- * 
- * 获取图片数据
- * 
- * ***************************************************************/
-osStatus GetPicData_Queue_Event(picDataParm *data)
-{
-  return osMessageQueueGet(PicDataHandle, data, NULL, portMAX_DELAY);
-}
-
-osStatus GetPicDataING_Queue_Event(picDataParm *data)
-{
-  return osMessageQueueGet(PicDataHandle, data, NULL, 1800);
-}
 
 /*****************************************************************
  * 
@@ -487,7 +296,7 @@ void Only_Pic_Display(uint8_t pfac,uint8_t plit)
   pdata.Textbackpic = plit;
   pdata.Textlocat = 0;
   pdata.Textcount = 0;
-  GetParam_Queue_Event(&pdata);
+//  GetParam_Queue_Event(&pdata);
 }
 
 /*****************************************************************
@@ -507,7 +316,7 @@ void Text_Pic_Display(uint8_t pfac,uint8_t plit)
   pdata.Textbackpic = plit;
   pdata.Textlocat = 0;
   pdata.Textcount = 0;
-  GetParam_Queue_Event(&pdata);
+//  GetParam_Queue_Event(&pdata);
 }
 
 /******************************************************************
@@ -644,7 +453,7 @@ user_main_info("Get Data");
     }
     else
       picstat = pictraning;
-    Putstat_Queue_Event(&picstat);    
+//    Putstat_Queue_Event(&picstat);    
   }
   user_main_info("picter input to flash packet finish,picture number: %d, packet number: %d",plist,pcnt); 
 
@@ -816,10 +625,10 @@ void Analyze_Wirle_Data(uint8_t *dat, uint32_t datlen)
       ackdata[11]=0xEE;
       ackdata[12]=0x00;
       // if(!Picture_param_write(TabFaceA,dat,datlen)) ackdata[8]=0x00;
-      picpramdata.tfac = TabFaceA;
-      memcpy(picpramdata.tdata,dat,sizeof(picpramdata.tdata));
-      picpramdata.tdatlen = datlen;
-      if(PutPicData_Queue_Event(&picpramdata)) ackdata[8]=0x00;    
+//      picpramdata.tfac = TabFaceA;
+//      memcpy(picpramdata.tdata,dat,sizeof(picpramdata.tdata));
+//      picpramdata.tdatlen = datlen;
+      if(Picture_param_write(TabFaceA,dat,datlen)) ackdata[8]=0x00;    
       BLE_Answer_Data(ackdata,12);
       break;
     // case PicturecallA:
@@ -873,7 +682,7 @@ void Analyze_Wirle_Data(uint8_t *dat, uint32_t datlen)
       picpramdata.tfac = TabFaceB;
       memcpy(picpramdata.tdata,dat,sizeof(picpramdata.tdata));
       picpramdata.tdatlen = datlen;
-      if(PutPicData_Queue_Event(&picpramdata)) ackdata[8]=0x00;             
+      if(Picture_param_write(TabFaceA,dat,datlen)) ackdata[8]=0x00;             
       BLE_Answer_Data(ackdata,12);
       break;
     // case PicturecallB:
@@ -920,7 +729,7 @@ void Analyze_Wirle_Data(uint8_t *dat, uint32_t datlen)
       picpramdata.tfac = TabFaceAB;
       memcpy(picpramdata.tdata,dat,sizeof(picpramdata.tdata));
       picpramdata.tdatlen = datlen;
-      if(PutPicData_Queue_Event(&picpramdata)) ackdata[8]=0x00;          
+      if(Picture_param_write(TabFaceA,dat,datlen)) ackdata[8]=0x00;          
       BLE_Answer_Data(ackdata,12);
       break;  
     case CmdA:
@@ -972,319 +781,71 @@ void Analyze_Wirle_Data(uint8_t *dat, uint32_t datlen)
 
 /************************************************************************外部事件处理分配***************************************************************************/
 
-/*********************************************************************************
- *
- *初始化创建事件队列,将串口或按键等事件放进队列等待处理
- *
-**********************************************************************************/
-void EventQueueInit(void)
-{
-  // Create a queue capable of containing 300 uint8_t values.
-  QueueEventHandle = osMessageQueueNew (30, sizeof(uint8_t), &QueueEvent_attributes);
-  if( QueueEventHandle == NULL )
-  {
-    user_main_error("ble uart init fail");
-    // Queue was not created and must not be used.  //可以打开中断或者初始化对应串口
-  }    
-}
-
-/********************************************************************************
-* 
-* 蓝牙串口事件，在蓝牙接收完一包数据之后触发此任务
-* 
-* ******************************************************************************/
-void BLE_Queue_Event(uint8_t *dat, uint32_t datlen)
-{
-  EXTEVENT bleevent=BLEEVENT;  
-  osMessageQueuePut(QueueEventHandle, &bleevent, NULL, 0);
-}
-
-/********************************************************************************
- * 
- * 删除事件队列
- * 
- * ******************************************************************************/
-osStatus_t EventQueueDelet(void)
-{
-  user_main_info("Event Queue Delete success!");
-  return osMessageQueueDelete(QueueEventHandle);
-}
-
 
 /*********************************************************************************
  * 
- * 外部事件处理任务，等待事件触发用于分配处理
+ * 初步处理接收到的粗略数据
  * 
 **********************************************************************************/
-void ext_eventTask(void *argument)
+void Rev_DataAnalye(EXTEVENT pevent, uint8_t *rdata, uint32_t rlen)
 {
-  EXTEVENT pevent;
-  // EventQueueInit();
-
-  if(PicTransQueue_Init())
-  {
-    user_main_error("Picture Trans State Init Fail!");
-  } 
-  while(1)
-  {
-    user_main_debug("BLE RX Data seuccess"); 
-    if(osMessageQueueGet(QueueEventHandle, &pevent, NULL, portMAX_DELAY)==osOK)
-    {
-      // /*打印接收数据LOG*/
-      // LOG("ble RX:");
-      // for(int i=0;i<BLEUart2RxCnt;i++)
-      //   LOG(" %002x",BLEUart2RxData[i]);
-      // LOG("\r\n");      
-      
-      /*判断接收到的数据是否符合正常数据长度，如果不符合可以直接PASS掉*/
-      if(BLEUart2RxCnt > 5)
-      {
-        if(!Check_Data_CRC(BLEUart2RxData,BLEUart2RxCnt))
-        {
-          /*当有数据写入时需要打开电源*/
-          TABLEPOWON();           
-          /*验证数据是从哪写入*/          
-          switch(pevent){
-            case BLEEVENT:
-              user_main_debug("BLE RX Data lenth:%d",BLEUart2RxCnt); 
-              Analyze_Wirle_Data(BLEUart2RxData,BLEUart2RxCnt);                       
-              break;
-            case LORAEVENT:
-              user_main_debug("LoRa RX Data lenth:%d",BLEUart2RxCnt);
-              break;
-            default:
-            /*打印错误数据到LOG*/
-              user_main_error("Receive Event Error!!!");
-              LOG("ble error RX:");
-              for(int i=0;i<BLEUart2RxCnt;i++)
-                LOG(" %002x",BLEUart2RxData[i]);
-              LOG("\r\n");
-              /*清除错误数据并且打印错误*/
-              Clear_BLEUart_Data();                    
-              break; 
-          }         
-        }  
-        else
-        {
-          user_main_error(" rx data check fail");
-          LOG("ble error RX:");
-          for(int i=0;i<BLEUart2RxCnt;i++)
-            LOG(" %002x",BLEUart2RxData[i]);
-          LOG("\r\n");        
-          /*发送数据错误应答*/
-          BLE_Answer_Type();
-        }
-      }
-      else
-      {
-        user_main_error(" rx data lenth is too short");
-        LOG("ble error RX:");
-        for(int i=0;i<BLEUart2RxCnt;i++)
-          LOG(" %002x",BLEUart2RxData[i]);
-        LOG("\r\n");           
-      } 
-      /*清除错误数据并且打印错误*/
-      Clear_BLEUart_Data();     
-    }
-  }
-}
-
-
-/*******************************************************************
- *
- *分别检测设备数据
- *
-********************************************************************/
-int selfcheck_config(CHECKDEV chtype)
-{
-  uint32_t batval;
-  char statstr[10];
-  uint8_t FLASHID[4];
-  uint8_t gcheckdata[8];
+  // /*打印接收数据LOG*/
+  // LOG("ble RX:");
+  // for(int i=0;i<rlen;i++)
+  //   LOG(" %002x",rdata[i]);
+  // LOG("\r\n");      
   
-  EXTEVENT pevent;
-
-  switch (chtype)
+  /*判断接收到的数据是否符合正常数据长度，如果不符合可以直接PASS掉*/
+  if(rlen > 5)
   {
-  case flashcheck:
-    /* 读取FLASH版本号 */
-    W25X_FLASH_ReadID(FLASHID,4);
-    memset(statstr,0,10);
-    if(FLASHID[0] == 0xEF)
+    if(!Check_Data_CRC(rdata,rlen))
     {
-      /* FLASH正常 */
-      eDevTypeParam.wFlash.devstatus = DEVNORMALLY;
-      /* 赋值设备号 */
-      memcpy(eDevTypeParam.wFlash.paramdata,FLASHID,3);
-      memcpy(statstr,"OK",sizeof("OK"));
-      user_main_debug("gt60m2 check status: %s, data: %s",statstr,FLASHID);
-      return 0;
-    }
-    else
-    {
-      /* FLASH异常 */
-      eDevTypeParam.wFlash.devstatus = DEVEEROR;
-      memcpy(statstr,"FAIL",sizeof("FAIL"));
-    }
-    user_main_debug("gt60m2 check status: %s, data: %s",statstr,FLASHID);
-    return 1;
-  case gt60m2check:
-    /* 读取字库芯片版本 */
-    r_dat_bat(0x93,8,gcheckdata);
-    memset(statstr,0,10);
-    if(gcheckdata[0] == 0x18)
-    {
-      eDevTypeParam.gT60M2Dev.devstatus = DEVNORMALLY;
-      memcpy(statstr,"OK",sizeof("OK"));
-      user_main_debug("gt60m2 check status: %s, data: %s",statstr,gcheckdata);
-      return 0;
-    }
-    else
-    {
-      eDevTypeParam.gT60M2Dev.devstatus = DEVEEROR;
-      memcpy(statstr,"FAIL",sizeof("FAIL"));
-    }
-    user_main_debug("gt60m2 check status: %s, data: %s",statstr,gcheckdata);
-    return 1;
-  case blecheck:
-    /* 读取蓝牙芯片版本号等 */
-      //发送指令
-    /*等待获取,区分串口指令类型*/
-    if(osMessageQueueGet(QueueEventHandle, &pevent, NULL, 1000)==osOK)
-    {
-      if(pevent == BLEEVENT)
-      {
-        /*对比字符是否符合*/
-        // if()
-        {
-          /*打印接收数据LOG*/
-          LOG("ble RX:");
-          for(int i=0;i<BLEUart2RxCnt;i++)
-            LOG(" %002x",BLEUart2RxData[i]);
-          LOG("\r\n");
-          /*判断接收数据是否正确*/
-
-          Clear_BLEUart_Data();
-          return 0;  
-        }
-        // else
-        // {
-
-        //   return 1
-        // }
-      }
-      return 1;       
+      /*当有数据写入时需要打开电源*/
+      TABLEPOWON();           
+      /*验证数据是从哪写入*/          
+      switch(pevent){
+      case BLEEVENT:
+        user_main_debug("BLE RX Data lenth:%d",rlen); 
+        Analyze_Wirle_Data(rdata,rlen);                       
+        break;
+      case LORAEVENT:
+        user_main_debug("LoRa RX Data lenth:%d",rlen);
+        break;
+      default:
+        /*打印错误数据到LOG*/
+        user_main_error("Receive Event Error!!!");
+        LOG("ble error RX:");
+        for(int i=0;i<rlen;i++)
+          LOG(" %002x",rdata[i]);
+        LOG("\r\n");                  
+        break; 
+      }         
     }  
     else
     {
-      /* 如果超时并未接收到数据赋值失败，并返回错误 */
-
-      return 1;
+      user_main_error(" rx data check fail");
+      LOG("ble error RX:");
+      for(int i=0;i<rlen;i++)
+        LOG(" %002x",rdata[i]);
+      LOG("\r\n");        
+      /*发送数据错误应答*/
+      BLE_Answer_Type();
     }
-  case loracheck:
-  /* 读取Lora相关状态与版本号 */
-    //发送指令
-  /*等待获取,区分串口指令类型*/
-  if(osMessageQueueGet(QueueEventHandle, &pevent, NULL, 1000)==osOK)
-  {
-    if(pevent == BLEEVENT)
-    {
-      /*对比字符是否符合*/
-      // if()
-      {
-        /*打印接收数据LOG*/
-        LOG("ble RX:");
-        for(int i=0;i<BLEUart2RxCnt;i++)
-          LOG(" %002x",BLEUart2RxData[i]);
-        LOG("\r\n");
-        /*判断接收数据是否正确*/
-
-        Clear_BLEUart_Data();
-        return 0;  
-      }
-      // else
-      // {
-
-      //   return 1
-      // }
-    }
-    return 1;       
-  }  
+  }
   else
   {
-    /* 如果超时并未接收到数据赋值失败，并返回错误 */
-    
-    return 1;
-  }
-  break;
-  case batterycheck:
-    /* 获取电池电量 */
-    Get_Battery_Val(&batval);
-    if(batval == 0)
-    {
-      user_main_debug("%d",batval);
-      return 1;
-    }
-    else
-    {
-      user_main_debug("Battery get Fail!");
-      return 0; 
-    }           
-  default:
-    return 1;
-  }
+    user_main_error(" rx data lenth is too short");
+    LOG("ble error RX:");
+    for(int i=0;i<rlen;i++)
+      LOG(" %002x",rdata[i]);
+    LOG("\r\n");           
+  } 
 }
 
 
 
-/*******************************************************************
- *
- *桌牌上电自检功能
- *
-********************************************************************/
-void selfcheckTask(void *argument)
-{
-  CHECKDEV selfcheck_type = flashcheck;
-  
-  /*初始化相关硬件，用于自检*/
-  EventQueueInit();
-  BLE_uart_task_init();
-  GetParamQueue_Init();
-  FLASH_Init();  
-  memset(&eDevTypeParam,0,sizeof(DevTypeParam_t));
 
-  while(1)
-  {
-    if(selfcheck_type < 5)
-    {
-      /*如果未获得正确数值则跳出重复循环*/
-      for(int i=0;i<3;i++)
-      {
-        if(selfcheck_config(selfcheck_type))
-        {
 
-        }
-        else
-        {
-          /*进行下一次检测*/
-          selfcheck_type++;
-          break;
-        }
-      }
-    }
-    else
-    {
-      // /*判断蓝牙或者LORA通讯等为正常*/
-
-      // /*判断主要模组为异常则保持出厂模式进入休眠*/
-      // /*外部事件分配任务*/
-      // extevenTaskHandle = osThreadNew(ext_eventTask, NULL, &extevenTask_attributes);
-      // /*桌牌显示任务*/
-      // tablesignTaskHandle = osThreadNew(tablesignTask, NULL, &tablesignTask_attributes);      
-      
-    }       
-  }
-}
 
 
 

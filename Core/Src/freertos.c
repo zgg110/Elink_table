@@ -27,6 +27,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "w25q128.h"
+#include "dataconfig.h"    
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -46,7 +47,7 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN Variables */
-
+unsigned char pBits[192*192/8];
 /* USER CODE END Variables */
 /* Definitions for getBLETask */
 osThreadId_t getBLETaskHandle;
@@ -139,9 +140,8 @@ void GetBLETask(void *argument)
         else
         {         
           /*接收数据完毕处理相应信息*/
-          
-          /*返回处理结束后的应答数据，判断是否出发投屏任务*/
-          
+          Rev_DataAnalye(BLEEVENT,BLEUart2RxData,BLEUart2RxCnt);
+         
           break;
         }                
       }      
