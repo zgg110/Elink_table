@@ -38,6 +38,9 @@ uint8_t eTableDisplayType = 0;
 /*压缩图片接收为最后一包标志位*/
 uint8_t comPicFinishFlag = 0;
 
+/*确定数据传输后记录当次设备的显示位置*/
+Display_Data eDisplay_Data = {0};
+
 extern uint8_t sign;
 
 extern uint8_t BLEUart2RxData[1124];
@@ -133,6 +136,11 @@ int Text_param_count(DataType_f dtype, uint8_t *dat, uint32_t datlen,Fontsparam 
       
    param[edatadd].Textlocat = (dat[5]<<8)|dat[6];            //显示位置
    user_main_info("Text location,inputdata:0x%04x",param[edatadd].Textlocat);
+   /*如果A面就写入A面的地址*/
+   if(dtype == 0x01)
+    eDisplay_Data.PICADDRA = (dat[5]<<8)|dat[6];
+   else if(dtype == 0x03)
+    eDisplay_Data.PICADDRB = (dat[5]<<8)|dat[6]; 
 
    if((dat[7] != 32) && (dat[7] != 48) && (dat[7] != 64) && (dat[7] != 80) && (dat[7] != 96) && (dat[7] != 112) && (dat[7] != 128) && (dat[7] != 144) && (dat[7] != 192))
    {
@@ -583,9 +591,12 @@ void Analyze_Wirle_Data(uint8_t *dat, uint32_t datlen)
   picDataParm picpramdata; 
   switch((DataType_f)*(dat+1)){
     case TPictureA:
-      /*需要等待图片完成*/
-      eWaitPicSta = WAITPIC;
+      /*如果没有输入文字，则只是显示图片*/
+      if(eDisplay_Data.DATAMODA == 0)
+        eDisplay_Data.DATAMODA = OnlyPic;
     case TextA:
+      /*有文字输入则显示文字与图片*/
+      eDisplay_Data.DATAMODA = TextAndPic;
       /*添加应答数据*/
       ackdata[1]=TextcallA;
       /*设置需要文字图片同时传输*/

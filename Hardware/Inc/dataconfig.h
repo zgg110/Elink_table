@@ -190,6 +190,20 @@ typedef struct {
   uint32_t tdatlen;
 }picDataParm;
 
+typedef struct 
+{
+  /* 是否有数据写入 */
+  uint8_t           WIRTEDAT;
+  /* 设备A面显示信息模式 */
+  TableDisplayType  DATAMODA;
+  /* 设备B面显示信息模式 */
+  TableDisplayType  DATAMODB;  
+  /* A面显示图片位置 */
+  uint16_t           PICADDRA;
+  /* B面显示图片位置 */
+  uint16_t           PICADDRB;  
+}Display_Data;
+
 
 void ext_eventTask(void *argument);
 

@@ -1006,7 +1006,7 @@
                 <expressions>
                     <item>BLEUart2RxData</item>
                     <item>rdata</item>
-                    <item></item>
+                    <item />
                 </expressions>
                 <col-names>
                     <item>Expression</item>

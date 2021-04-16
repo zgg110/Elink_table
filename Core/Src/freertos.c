@@ -45,6 +45,8 @@
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
 extern UART_HandleTypeDef huart2;
+
+extern Display_Data eDisplay_Data;
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
@@ -128,6 +130,8 @@ void GetBLETask(void *argument)
   uint32_t BLEUart2RxCnt=0;
   uint8_t  BLEUart2RxData[1124] = {0}; 
   HAL_UART_Receive_IT(&_BLE_USART, &indata, 1);
+  
+  memset(&eDisplay_Data,0,sizeof(eDisplay_Data));
   /* Infinite loop */
   while(1)
   {
