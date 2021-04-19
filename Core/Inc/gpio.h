@@ -38,7 +38,8 @@
 void MX_GPIO_Init(void);
 
 /* USER CODE BEGIN Prototypes */
-
+void sleep_BLE_Uartconfig(void);
+void GPIO_Init(void);
 /* USER CODE END Prototypes */
 
 #ifdef __cplusplus

@@ -69,9 +69,9 @@ typedef enum {
 
 /*区分只显示图片还是图片文字一起显示*/
 typedef enum {
-  TextAndPic = 0,   //文字与图片一起
+  Picnone = 0,           //无  
   OnlyPic,           //只显示图片
-  Picnone            //无   
+  TextAndPic    //文字与图片一起    
 }TableDisplayType;
 
 
@@ -103,6 +103,8 @@ void tablesignTask(void *argument);
 void EventQueueInit(void);
 void BLE_Queue_Event(uint8_t *dat, uint32_t datlen);
 int CheckTableBusy(TableFace fac,uint32_t timeout);
+
+void TableSignSeting(TableFace fac, uint8_t pict,TableDisplayType dis);
 
 #endif
 

@@ -30,6 +30,10 @@
 #include "w25q128.h"
 #include "dataconfig.h" 
 #include "blecomm.h"
+#include "gpio.h"
+#include "usart.h"
+#include "spi.h"
+#include "adc.h"    
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -39,11 +43,14 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
+void Lpower_sleep_config(void);
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
+/*定义无连接计�?*/
+uint8_t connttimeout=0;
+
 extern UART_HandleTypeDef huart2;
 
 extern Display_Data eDisplay_Data;
@@ -58,7 +65,14 @@ osThreadId_t getBLETaskHandle;
 const osThreadAttr_t getBLETask_attributes = {
   .name = "getBLETask",
   .priority = (osPriority_t) osPriorityHigh,
-  .stack_size = 256 * 16
+  .stack_size = 256 * 20
+};
+/* Definitions for ConfigdisTask */
+osThreadId_t ConfigdisTaskHandle;
+const osThreadAttr_t ConfigdisTask_attributes = {
+  .name = "ConfigdisTask",
+  .priority = (osPriority_t) osPriorityLow,
+  .stack_size = 128 * 12
 };
 /* Definitions for QueueBLEusart */
 osMessageQueueId_t QueueBLEusartHandle;
@@ -72,6 +86,7 @@ const osMessageQueueAttr_t QueueBLEusart_attributes = {
 /* USER CODE END FunctionPrototypes */
 
 void GetBLETask(void *argument);
+void configdisTask(void *argument);
 
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
@@ -108,6 +123,9 @@ void MX_FREERTOS_Init(void) {
   /* Create the thread(s) */
   /* creation of getBLETask */
   getBLETaskHandle = osThreadNew(GetBLETask, NULL, &getBLETask_attributes);
+
+  /* creation of ConfigdisTask */
+  ConfigdisTaskHandle = osThreadNew(configdisTask, NULL, &ConfigdisTask_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -160,11 +178,129 @@ void GetBLETask(void *argument)
   /* USER CODE END GetBLETask */
 }
 
+/* USER CODE BEGIN Header_configdisTask */
+/**
+* @brief Function implementing the ConfigdisTask thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_configdisTask */
+void configdisTask(void *argument)
+{
+  /* USER CODE BEGIN configdisTask */
+  /* Infinite loop */
+  while(1)
+  {
+    /*判断电平是否处于高电平，高电平处于连接状态*/
+    if(BLEWakeUp == 0)
+    {
+      if(connttimeout > 0) connttimeout=0;
+    }
+    else
+    {
+      connttimeout++;
+      user_main_info("BLE connect timeout %d",connttimeout);
+      /*如果断开设备之后6秒，则进入显示设备消息显示*/
+      if(connttimeout > 6)
+      {
+        /*检测设备是否有输入数据并进行显示*/
+        if(eDisplay_Data.DATAMODA)
+        {
+          TableSignSeting(TabFaceA,eDisplay_Data.PICADDRA,eDisplay_Data.DATAMODA);
+          eDisplay_Data.DATAMODA = Picnone;
+          eDisplay_Data.PICADDRA = 0;
+        }
+        /*检测设备是否有输入数据并进行显示*/
+        if(eDisplay_Data.DATAMODB)
+        {
+          TableSignSeting(TabFaceB,eDisplay_Data.PICADDRB,eDisplay_Data.DATAMODB);
+          eDisplay_Data.DATAMODB = Picnone;
+          eDisplay_Data.PICADDRB = 0;
+        }
+        /*检测设备是否有输入数据并进行显示*/
+        if(eDisplay_Data.DATAMODAB)
+        {
+          TableSignSeting(TabFaceAB,eDisplay_Data.PICADDRAB,eDisplay_Data.DATAMODAB);
+          eDisplay_Data.DATAMODAB = Picnone;
+          eDisplay_Data.PICADDRAB = 0;          
+        }        
+      }
+      /*如果超时将设备进入休眠模式*/
+      if(connttimeout > 20)
+      {
+        connttimeout = 0;
+        user_main_info("BLE connect timeout entry");
+        /*断开超时之后进入休眠*/
+        Lpower_sleep_config();
+      }
+    }
+    osDelay(500);
+   }
+  /* USER CODE END configdisTask */
+}
+
 /* Private application code --------------------------------------------------*/
 /* USER CODE BEGIN Application */
 void BLE_handle_uartirq(char ch)
 {
   osMessageQueuePut(QueueBLEusartHandle, &ch, NULL, 0);
+}
+
+/*低功耗休眠函数设置*/
+void Lpower_sleep_config(void)
+{
+  uint8_t indata;
+  GPIO_InitTypeDef GPIO_InitStruct; 
+  
+  user_main_info("BLE no connent device will sleep");  
+  SPI_DeInit();
+  ADC_DeInit();
+//  UART_Init();
+  
+  sleep_BLE_Uartconfig();
+  
+//  user_main_info("BLE entry sleep"); 
+//  __HAL_RCC_GPIOA_CLK_ENABLE();
+//  __HAL_RCC_GPIOB_CLK_ENABLE();
+//  __HAL_RCC_GPIOC_CLK_ENABLE();
+//  __HAL_RCC_GPIOH_CLK_ENABLE();
+//  
+//  GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
+//  GPIO_InitStruct.Pull = GPIO_NOPULL;
+//  GPIO_InitStruct.Pin = GPIO_PIN_All;    
+//  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct); 	
+//  HAL_GPIO_Init(GPIOH, &GPIO_InitStruct);
+//  GPIO_InitStruct.Pin = GPIO_PIN_All & ~GPIO_PIN_3;
+//  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+//  GPIO_InitStruct.Pin = GPIO_PIN_All & ~GPIO_PIN_3;
+//  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+//  
+//  /* Disable GPIOs clock */
+//  __HAL_RCC_GPIOC_CLK_DISABLE();
+//  __HAL_RCC_GPIOB_CLK_DISABLE();
+//  // __HAL_RCC_GPIOA_CLK_DISABLE();  
+//  __HAL_RCC_GPIOH_CLK_DISABLE();	
+    
+  HAL_SuspendTick();    
+  HAL_PWR_DeInit();
+  HAL_PWR_DisablePVD();
+//  
+  HAL_PWR_EnterSTOPMode(PWR_LOWPOWERREGULATOR_ON,PWR_STOPENTRY_WFI);
+//  osDelay(5000);
+//  
+  HAL_PWR_EnablePVD();
+  HAL_ResumeTick();    
+//  HAL_Init();
+  SystemClock_Config();
+  UART_Init();
+  SPI_Init();
+//  GPIO_Init();
+//  MX_USART2_UART_Init(); 
+//  HAL_UART_Receive_IT(&_BLE_USART, &indata, 1);  
+  // HAL_NVIC_DisableIRQ(EXTI3_IRQn);      
+//  MX_RTC_Init();  
+  user_main_info("wake up!!!"); 
+  
 }
 
 /* USER CODE END Application */

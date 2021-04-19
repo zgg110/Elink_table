@@ -58,7 +58,7 @@
 
 /* External variables --------------------------------------------------------*/
 extern UART_HandleTypeDef huart2;
-extern TIM_HandleTypeDef htim7;
+extern TIM_HandleTypeDef htim16;
 
 /* USER CODE BEGIN EV */
 extern  uint8_t chdata;
@@ -161,6 +161,20 @@ void DebugMon_Handler(void)
 /******************************************************************************/
 
 /**
+  * @brief This function handles TIM1 update interrupt and TIM16 global interrupt.
+  */
+void TIM1_UP_TIM16_IRQHandler(void)
+{
+  /* USER CODE BEGIN TIM1_UP_TIM16_IRQn 0 */
+
+  /* USER CODE END TIM1_UP_TIM16_IRQn 0 */
+  HAL_TIM_IRQHandler(&htim16);
+  /* USER CODE BEGIN TIM1_UP_TIM16_IRQn 1 */
+
+  /* USER CODE END TIM1_UP_TIM16_IRQn 1 */
+}
+
+/**
   * @brief This function handles USART2 global interrupt.
   */
 void USART2_IRQHandler(void)
@@ -171,26 +185,26 @@ void USART2_IRQHandler(void)
   HAL_UART_IRQHandler(&huart2);
   /* USER CODE BEGIN USART2_IRQn 1 */
   HAL_UART_Receive_IT(&huart2, &chdata, 1);
-  /* 将接收到的数据塞进接收数据队列 */
+  /* 将接收到的数据塞进接收数据队�? */
   BLE_handle_uartirq(chdata);
   /* USER CODE END USART2_IRQn 1 */
 }
 
-/**
-  * @brief This function handles TIM7 global interrupt.
-  */
-void TIM7_IRQHandler(void)
-{
-  /* USER CODE BEGIN TIM7_IRQn 0 */
-
-  /* USER CODE END TIM7_IRQn 0 */
-  HAL_TIM_IRQHandler(&htim7);
-  /* USER CODE BEGIN TIM7_IRQn 1 */
-
-  /* USER CODE END TIM7_IRQn 1 */
-}
-
 /* USER CODE BEGIN 1 */
+/**
+  * @brief This function handles EXTI line3 interrupt.
+  */
+void EXTI3_IRQHandler(void)
+{
+  /* USER CODE BEGIN EXTI3_IRQn 0 */
+  HAL_NVIC_DisableIRQ(EXTI3_IRQn);
+  /* USER CODE END EXTI3_IRQn 0 */
+  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_3);
+  /* USER CODE BEGIN EXTI3_IRQn 1 */
 
+    //   __set_FAULTMASK(1);
+    //   HAL_NVIC_SystemReset();  
+  /* USER CODE END EXTI3_IRQn 1 */
+}
 /* USER CODE END 1 */
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

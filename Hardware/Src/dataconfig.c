@@ -46,6 +46,7 @@ extern uint8_t sign;
 extern uint8_t BLEUart2RxData[1124];
 extern uint32_t BLEUart2RxCnt;
 
+
 // osThreadId_t tablesignTaskHandle;
 // const osThreadAttr_t tablesignTask_attributes = {
 //   .name = "tablesignTask",
@@ -123,6 +124,13 @@ int Text_param_count(DataType_f dtype, uint8_t *dat, uint32_t datlen,Fontsparam 
    edatalen = (uint16_t)((dat[2]<<8)|dat[3]);
 
    param[edatadd].Textbackpic = dat[4];                      //图片编号
+   /*如果A面就写入A面的地址*/
+   if(dtype == TextA)
+    eDisplay_Data.PICADDRA = dat[4];
+   else if(dtype == TextB)
+    eDisplay_Data.PICADDRB = dat[4];
+   else if(dtype == TextAB)
+    eDisplay_Data.PICADDRAB = dat[4];
 
    if(param[edatadd].Textbackpic > 200)
    {
@@ -136,11 +144,6 @@ int Text_param_count(DataType_f dtype, uint8_t *dat, uint32_t datlen,Fontsparam 
       
    param[edatadd].Textlocat = (dat[5]<<8)|dat[6];            //显示位置
    user_main_info("Text location,inputdata:0x%04x",param[edatadd].Textlocat);
-   /*如果A面就写入A面的地址*/
-   if(dtype == 0x01)
-    eDisplay_Data.PICADDRA = (dat[5]<<8)|dat[6];
-   else if(dtype == 0x03)
-    eDisplay_Data.PICADDRB = (dat[5]<<8)|dat[6]; 
 
    if((dat[7] != 32) && (dat[7] != 48) && (dat[7] != 64) && (dat[7] != 80) && (dat[7] != 96) && (dat[7] != 112) && (dat[7] != 128) && (dat[7] != 144) && (dat[7] != 192))
    {
@@ -353,6 +356,7 @@ user_main_info("Get Data");
   // tokendata = ((dat[2]<<8)|dat[3]);
   /*获取图片编号*/
   plist = dat[4];
+
   if(plist > 200)
   {
     user_main_error("Picture location error");
@@ -370,11 +374,11 @@ user_main_info("Get Data");
  
   /*获取像素数据的个数*/
   datcont = ((dat[8]<<8)|dat[9]);
-  if(datcont > (datlen-11))
-  {
-    user_main_error("Picture Pix error, Data:0x%04x",datcont);
-    return 1;
-  } 
+//  if(datcont > (datlen-11))
+//  {
+//    user_main_error("Picture Pix error, Data:0x%04x",datcont);
+//    return 1;
+//  } 
 
   /*根据验证信息写入到对应的FALSH地址中*/
   memcpy(picdata,&dat[10],datcont);
@@ -382,9 +386,16 @@ user_main_info("Get Data");
   {
     /*擦除*/
     if(pcnt==1)
-    {
+    {    
       /*进入第一个计数*/
       ecount = 1;
+      /*设置传输图片的编号*/
+      if(fac == TabFaceA)
+        eDisplay_Data.PICADDRA = plist;
+      else if(fac == TabFaceB) 
+        eDisplay_Data.PICADDRB = plist;
+      else if(fac == TabFaceAB) 
+        eDisplay_Data.PICADDRAB = plist;      
       firstaddr=Get_pic_Addr(fac, plist,(TableColorType)(pcolor-1));
       nextaddr = firstaddr;
       /*擦除对应地址上的图片数据*/
@@ -440,30 +451,30 @@ user_main_info("Get Data");
     /*获取下一个数据包的开始位置*/
     nextaddr += datcont;
   }
-   /*判断是否为最后一包数据*/
-   user_main_info("eWaitPicSta = %d",eWaitPicSta);
-  if(eWaitPicSta == WAITPIC)
-  {
-    user_main_info("comPicFinishFlag = %d",comPicFinishFlag);
-    /*判断最后一包数据*/
-    if(comPicFinishFlag == 1)  //(nextaddr-firstaddr)>=48000  (pcnt >= 47) && (pcolor == 0x02)
-    {
-      comPicFinishFlag = 0;
-      if(eTableDisplayType == 0)
-      {
-        eTableDisplayType = 1;    
-        Only_Pic_Display(*(dat+1),plist);
-      }
-      else
-      {
-        Text_Pic_Display(eTextandPicFlag,plist);
-      }
-      picstat = pictfinish;
-    }
-    else
-      picstat = pictraning;
-//    Putstat_Queue_Event(&picstat);    
-  }
+//   /*判断是否为最后一包数据*/
+//   user_main_info("eWaitPicSta = %d",eWaitPicSta);
+//  if(eWaitPicSta == WAITPIC)
+//  {
+//    user_main_info("comPicFinishFlag = %d",comPicFinishFlag);
+//    /*判断最后一包数据*/
+//    if(comPicFinishFlag == 1)  //(nextaddr-firstaddr)>=48000  (pcnt >= 47) && (pcolor == 0x02)
+//    {
+//      comPicFinishFlag = 0;
+//      if(eTableDisplayType == 0)
+//      {
+//        eTableDisplayType = 1;    
+//        Only_Pic_Display(*(dat+1),plist);
+//      }
+//      else
+//      {
+//        Text_Pic_Display(eTextandPicFlag,plist);
+//      }
+//      picstat = pictfinish;
+//    }
+//    else
+//      picstat = pictraning;
+////    Putstat_Queue_Event(&picstat);    
+//  }
   user_main_info("picter input to flash packet finish,picture number: %d, packet number: %d",plist,pcnt); 
 
   return 0;
@@ -591,9 +602,6 @@ void Analyze_Wirle_Data(uint8_t *dat, uint32_t datlen)
   picDataParm picpramdata; 
   switch((DataType_f)*(dat+1)){
     case TPictureA:
-      /*如果没有输入文字，则只是显示图片*/
-      if(eDisplay_Data.DATAMODA == 0)
-        eDisplay_Data.DATAMODA = OnlyPic;
     case TextA:
       /*有文字输入则显示文字与图片*/
       eDisplay_Data.DATAMODA = TextAndPic;
@@ -607,7 +615,7 @@ void Analyze_Wirle_Data(uint8_t *dat, uint32_t datlen)
         /*需要等待图片完成*/
         eWaitPicSta = WAITPIC;     
       }
-      //  Putstat_Queue_Event(&pics);
+
       /*将数据拆分为多行数据参数放入队列*/
        Text_param_write(dat,datlen);      
       /*判断数据后进行应答*/
@@ -625,6 +633,9 @@ void Analyze_Wirle_Data(uint8_t *dat, uint32_t datlen)
     // case CmdcallA:
     //   break;
     case PictureA:
+      /*如果没有输入文字，则只是显示图片*/
+      if(eDisplay_Data.DATAMODA == 0)
+        eDisplay_Data.DATAMODA = OnlyPic;      
       ackdata[1]=PicturecallA;   
       ackdata[4]=0x01;
       ackdata[5]=0x01;
@@ -651,6 +662,8 @@ void Analyze_Wirle_Data(uint8_t *dat, uint32_t datlen)
       /*需要等待图片完成*/
       eWaitPicSta = WAITPIC;      
     case TextB:
+      /*有文字输入则显示文字与图片*/
+      eDisplay_Data.DATAMODB = TextAndPic;      
       /*添加应答数据*/
       ackdata[1]=TextcallB;
       /*设置需要文字图片同时传输*/
@@ -661,7 +674,7 @@ void Analyze_Wirle_Data(uint8_t *dat, uint32_t datlen)
         /*需要等待图片完成*/
         eWaitPicSta = WAITPIC;      
       }    
-      //  Putstat_Queue_Event(&pics);
+
       /*将数据拆分为多行数据参数放入队列*/
        Text_param_write(dat,datlen);      
       /*判断数据后进行应答*/
@@ -679,6 +692,9 @@ void Analyze_Wirle_Data(uint8_t *dat, uint32_t datlen)
     // case CmdcallB:
     //   break;
     case PictureB:
+      /*如果没有输入文字，则只是显示图片*/
+      if(eDisplay_Data.DATAMODB == 0)
+        eDisplay_Data.DATAMODB = OnlyPic;      
       ackdata[1]=PicturecallB; 
       ackdata[4]=0x01;
       ackdata[5]=0x01;
@@ -694,7 +710,7 @@ void Analyze_Wirle_Data(uint8_t *dat, uint32_t datlen)
       picpramdata.tfac = TabFaceB;
       memcpy(picpramdata.tdata,dat,sizeof(picpramdata.tdata));
       picpramdata.tdatlen = datlen;
-      if(Picture_param_write(TabFaceA,dat,datlen)) ackdata[8]=0x00;             
+      if(Picture_param_write(TabFaceB,dat,datlen)) ackdata[8]=0x00;             
       BLE_Answer_Data(ackdata,12);
       break;
     // case PicturecallB:
@@ -703,6 +719,8 @@ void Analyze_Wirle_Data(uint8_t *dat, uint32_t datlen)
       /*需要等待图片完成*/
       eWaitPicSta = WAITPIC;        
     case TextAB:
+      /*有文字输入则显示文字与图片*/
+      eDisplay_Data.DATAMODAB = TextAndPic;      
       /*添加应答数据*/
       ackdata[1]=TextcallAB;
       /*设置需要文字图片同时传输*/
@@ -713,7 +731,7 @@ void Analyze_Wirle_Data(uint8_t *dat, uint32_t datlen)
         /*需要等待图片完成*/
         eWaitPicSta = WAITPIC;     
       }
-      //  Putstat_Queue_Event(&pics);
+
       /*将数据拆分为多行数据参数放入队列*/
        Text_param_write(dat,datlen);      
       /*判断数据后进行应答*/
@@ -725,6 +743,9 @@ void Analyze_Wirle_Data(uint8_t *dat, uint32_t datlen)
        BLE_Answer_Data(ackdata,10);
       break;
     case PictureAB:
+      /*如果没有输入文字，则只是显示图片*/
+      if(eDisplay_Data.DATAMODA == 0)
+        eDisplay_Data.DATAMODA = OnlyPic;      
     /*应答AB面投图数据*/
       ackdata[1]=PicturecallAB; 
       ackdata[4]=0x01;
@@ -738,10 +759,10 @@ void Analyze_Wirle_Data(uint8_t *dat, uint32_t datlen)
       ackdata[11]=0xEE;
       ackdata[12]=0x00;
       // if(!Picture_param_write(TabFaceAB,dat,datlen)) ackdata[8]=0x00;   
-      picpramdata.tfac = TabFaceAB;
-      memcpy(picpramdata.tdata,dat,sizeof(picpramdata.tdata));
-      picpramdata.tdatlen = datlen;
-      if(Picture_param_write(TabFaceA,dat,datlen)) ackdata[8]=0x00;          
+//      picpramdata.tfac = TabFaceAB;
+//      memcpy(picpramdata.tdata,dat,sizeof(picpramdata.tdata));
+//      picpramdata.tdatlen = datlen;
+      if(Picture_param_write(TabFaceAB,dat,datlen)) ackdata[8]=0x00;          
       BLE_Answer_Data(ackdata,12);
       break;  
     case CmdA:

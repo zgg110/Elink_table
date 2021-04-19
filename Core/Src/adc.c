@@ -117,7 +117,40 @@ void HAL_ADC_MspDeInit(ADC_HandleTypeDef* adcHandle)
 }
 
 /* USER CODE BEGIN 1 */
+/*开始进行ADC转换*/
+void Start_ADC1_work(void)
+{
+  HAL_ADC_Start(&hadc1);
+}
 
+
+/*停止ADC转换*/
+void End_ADC1_work(void)
+{
+  HAL_ADC_Stop(&hadc1);
+}
+
+/*获取ADC采集数据*/
+uint32_t Get_ADC1_Value(void)
+{
+  HAL_ADC_PollForConversion(&hadc1,10);
+  if(HAL_IS_BIT_SET(HAL_ADC_GetState(&hadc1), HAL_ADC_STATE_REG_EOC))
+    return HAL_ADC_GetValue(&hadc1);
+  else 
+    return 0;
+}
+
+/*端口初始化*/
+void ADC_Init(void)
+{
+  HAL_ADC_MspInit(&hadc1);
+}
+
+/*恢复默认端口状态??*/
+void ADC_DeInit(void)
+{
+  HAL_ADC_MspDeInit(&hadc1);
+}
 /* USER CODE END 1 */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

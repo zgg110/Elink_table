@@ -197,11 +197,15 @@ typedef struct
   /* 设备A面显示信息模式 */
   TableDisplayType  DATAMODA;
   /* 设备B面显示信息模式 */
-  TableDisplayType  DATAMODB;  
+  TableDisplayType  DATAMODB;
+  /* 设备AB面显示信息模式 */
+  TableDisplayType  DATAMODAB;  
   /* A面显示图片位置 */
   uint16_t           PICADDRA;
   /* B面显示图片位置 */
-  uint16_t           PICADDRB;  
+  uint16_t           PICADDRB; 
+  /* A面显示图片位置 */
+  uint16_t           PICADDRAB;  
 }Display_Data;
 
 
