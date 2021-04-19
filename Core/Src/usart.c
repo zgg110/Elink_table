@@ -262,7 +262,7 @@ void UART_DeInit(void)
   HAL_UART_MspDeInit(&huart3);
 }
 
-/*串口端口初始�?*/
+/*串口端口初始化*/
 void UART_Init(void)
 {
   HAL_UART_MspInit(&huart1);
