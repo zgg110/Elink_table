@@ -192,7 +192,7 @@ void configdisTask(void *argument)
   while(1)
   {
     /*判断电平是否处于高电平，高电平处于连接状态*/
-    if(BLEWakeUp == 0)
+    if((BLEWakeUp == 0) || (TABLEA_BUSY() == 0) || (TABLEB_BUSY() == 0))  
     {
       if(connttimeout > 0) connttimeout=0;
     }
@@ -201,7 +201,7 @@ void configdisTask(void *argument)
       connttimeout++;
       user_main_info("BLE connect timeout %d",connttimeout);
       /*如果断开设备之后6秒，则进入显示设备消息显示*/
-      if(connttimeout > 6)
+      if(connttimeout > 4)
       {
         /*检测设备是否有输入数据并进行显示*/
         if(eDisplay_Data.DATAMODA)
@@ -226,7 +226,7 @@ void configdisTask(void *argument)
         }        
       }
       /*如果超时将设备进入休眠模式*/
-      if(connttimeout > 20)
+      if(connttimeout > 10)
       {
         connttimeout = 0;
         user_main_info("BLE connect timeout entry");
@@ -256,31 +256,31 @@ void Lpower_sleep_config(void)
   SPI_DeInit();
   ADC_DeInit();
 //  UART_Init();
+
+  user_main_info("BLE entry sleep"); 
+  __HAL_RCC_GPIOA_CLK_ENABLE();
+  __HAL_RCC_GPIOB_CLK_ENABLE();
+  __HAL_RCC_GPIOC_CLK_ENABLE();
+  __HAL_RCC_GPIOH_CLK_ENABLE();
+  
+  GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Pin = GPIO_PIN_All;    
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct); 	
+  HAL_GPIO_Init(GPIOH, &GPIO_InitStruct);
+  GPIO_InitStruct.Pin = GPIO_PIN_All & ~GPIO_PIN_3;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+  GPIO_InitStruct.Pin = GPIO_PIN_All & ~GPIO_PIN_3;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+  
+  /* Disable GPIOs clock */
+  __HAL_RCC_GPIOC_CLK_DISABLE();
+  __HAL_RCC_GPIOB_CLK_DISABLE();
+  // __HAL_RCC_GPIOA_CLK_DISABLE();  
+  __HAL_RCC_GPIOH_CLK_DISABLE();
   
   sleep_BLE_Uartconfig();
-  
-//  user_main_info("BLE entry sleep"); 
-//  __HAL_RCC_GPIOA_CLK_ENABLE();
-//  __HAL_RCC_GPIOB_CLK_ENABLE();
-//  __HAL_RCC_GPIOC_CLK_ENABLE();
-//  __HAL_RCC_GPIOH_CLK_ENABLE();
-//  
-//  GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
-//  GPIO_InitStruct.Pull = GPIO_NOPULL;
-//  GPIO_InitStruct.Pin = GPIO_PIN_All;    
-//  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct); 	
-//  HAL_GPIO_Init(GPIOH, &GPIO_InitStruct);
-//  GPIO_InitStruct.Pin = GPIO_PIN_All & ~GPIO_PIN_3;
-//  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-//  GPIO_InitStruct.Pin = GPIO_PIN_All & ~GPIO_PIN_3;
-//  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-//  
-//  /* Disable GPIOs clock */
-//  __HAL_RCC_GPIOC_CLK_DISABLE();
-//  __HAL_RCC_GPIOB_CLK_DISABLE();
-//  // __HAL_RCC_GPIOA_CLK_DISABLE();  
-//  __HAL_RCC_GPIOH_CLK_DISABLE();	
-    
+      
   HAL_SuspendTick();    
   HAL_PWR_DeInit();
   HAL_PWR_DisablePVD();
@@ -292,12 +292,13 @@ void Lpower_sleep_config(void)
   HAL_ResumeTick();    
 //  HAL_Init();
   SystemClock_Config();
+  MX_GPIO_Init();  
   UART_Init();
   SPI_Init();
 //  GPIO_Init();
 //  MX_USART2_UART_Init(); 
 //  HAL_UART_Receive_IT(&_BLE_USART, &indata, 1);  
-  // HAL_NVIC_DisableIRQ(EXTI3_IRQn);      
+//  HAL_NVIC_DisableIRQ(EXTI3_IRQn);      
 //  MX_RTC_Init();  
   user_main_info("wake up!!!"); 
   

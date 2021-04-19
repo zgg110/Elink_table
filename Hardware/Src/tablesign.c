@@ -451,7 +451,11 @@ void TableSignSeting(TableFace fac, uint8_t pict,TableDisplayType dis)
   user_main_info("Picture Display running");
   
   /*设置定时检查是否投屏完毕*/
-   while(CheckTableBusy(fac,5)) osDelay(500);
+  while(CheckTableBusy(fac,5)) 
+  {
+    osDelay(500);
+    return;
+  }
 //  if(CheckTableBusy(fac,5))
 //  {
 //    eTablefac = fac;
