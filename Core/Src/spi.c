@@ -181,7 +181,7 @@ void SPI_DeInit(void)
   HAL_SPI_MspDeInit(&hspi2);
 }
 
-/*SPI端口初始化*/
+/*SPI端口初始�?*/
 void SPI_Init(void)
 {
   HAL_SPI_MspInit(&hspi1);

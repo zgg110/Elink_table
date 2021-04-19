@@ -117,7 +117,7 @@ void HAL_ADC_MspDeInit(ADC_HandleTypeDef* adcHandle)
 }
 
 /* USER CODE BEGIN 1 */
-/*开始进行ADC转换*/
+/*�?始进行ADC转换*/
 void Start_ADC1_work(void)
 {
   HAL_ADC_Start(&hadc1);
@@ -140,13 +140,13 @@ uint32_t Get_ADC1_Value(void)
     return 0;
 }
 
-/*端口初始化*/
+/*端口初始�?*/
 void ADC_Init(void)
 {
   HAL_ADC_MspInit(&hadc1);
 }
 
-/*恢复默认端口状态??*/
+/*恢复默认端口状�????*/
 void ADC_DeInit(void)
 {
   HAL_ADC_MspDeInit(&hadc1);

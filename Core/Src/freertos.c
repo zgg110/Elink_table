@@ -48,8 +48,10 @@ void Lpower_sleep_config(void);
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-/*定义无连接计�?*/
+/*定义无连接计数*/
 uint8_t connttimeout=0;
+
+extern uint8_t Displayflag;
 
 extern UART_HandleTypeDef huart2;
 
@@ -72,7 +74,7 @@ osThreadId_t ConfigdisTaskHandle;
 const osThreadAttr_t ConfigdisTask_attributes = {
   .name = "ConfigdisTask",
   .priority = (osPriority_t) osPriorityLow,
-  .stack_size = 128 * 12
+  .stack_size = 128 * 8
 };
 /* Definitions for QueueBLEusart */
 osMessageQueueId_t QueueBLEusartHandle;
@@ -192,9 +194,25 @@ void configdisTask(void *argument)
   while(1)
   {
     /*判断电平是否处于高电平，高电平处于连接状态*/
-    if((BLEWakeUp == 0) || (TABLEA_BUSY() == 0) || (TABLEB_BUSY() == 0))  
+    if( BLEWakeUp == 0 )  
     {
-      if(connttimeout > 0) connttimeout=0;
+      if(connttimeout > 0) 
+      {
+        connttimeout=0;
+      }
+    }
+    /*判断是否在显示屏幕*/
+    else if(Displayflag == 1)
+    {
+      if((TABLEA_BUSY() != 0) || (TABLEB_BUSY() != 0))
+      {
+        Displayflag = 0;
+        TABLEPOWOFF();
+      }
+      if(connttimeout > 0) 
+      {
+        connttimeout=0;
+      }      
     }
     else
     {
@@ -229,9 +247,10 @@ void configdisTask(void *argument)
       if(connttimeout > 10)
       {
         connttimeout = 0;
+        TABLEPOWOFF();
         user_main_info("BLE connect timeout entry");
         /*断开超时之后进入休眠*/
-        Lpower_sleep_config();
+        Lpower_sleep_config();     
       }
     }
     osDelay(500);

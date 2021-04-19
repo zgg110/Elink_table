@@ -453,6 +453,7 @@ void TableSignSeting(TableFace fac, uint8_t pict,TableDisplayType dis)
   /*设置定时检查是否投屏完毕*/
   while(CheckTableBusy(fac,5)) 
   {
+    Displayflag = 1;
     osDelay(500);
     return;
   }
