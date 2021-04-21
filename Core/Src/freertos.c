@@ -268,7 +268,6 @@ void BLE_handle_uartirq(char ch)
 /*低功耗休眠函数设置*/
 void Lpower_sleep_config(void)
 {
-  uint8_t indata;
   GPIO_InitTypeDef GPIO_InitStruct; 
   
   user_main_info("BLE no connent device will sleep");  
@@ -314,6 +313,7 @@ void Lpower_sleep_config(void)
   MX_GPIO_Init();  
   UART_Init();
   SPI_Init();
+  ADC_Init();
 //  GPIO_Init();
 //  MX_USART2_UART_Init(); 
 //  HAL_UART_Receive_IT(&_BLE_USART, &indata, 1);  

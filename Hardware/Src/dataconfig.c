@@ -12,6 +12,7 @@
 #include "w25q128.h"
 #include "blecomm.h"
 #include "mbcrc.h"
+#include "adc.h"
 //#include "battery_adc.h"
 
 /*默认配置参数*/
@@ -525,6 +526,8 @@ void BLE_Answer_Type(void)
  * *************************************************************************/
 void Pul_Cmd_Analyze(uint8_t *indat, uint32_t inlen, uint8_t *outdat, uint32_t *outlen)
 {
+  uint32_t batval = 0;
+  
   switch ((CmdType_f)*(indat+1))
   {
   /*版本号*/
@@ -557,7 +560,12 @@ void Pul_Cmd_Analyze(uint8_t *indat, uint32_t inlen, uint8_t *outdat, uint32_t *
   case Dbattery:
     /*内部判断是设置还是查询*/
     if((Workcmd_f)*(indat+2) == Watchcmd)
-      ;
+    {
+      Start_ADC1_work();
+      batval = Get_ADC1_Value();
+      End_ADC1_work();
+      user_main_debug("%d",batval);
+    }
     else
       ;  
     break;
@@ -626,12 +634,6 @@ void Analyze_Wirle_Data(uint8_t *dat, uint32_t datlen)
        ackdata[10]=0x00;              
        BLE_Answer_Data(ackdata,10);
       break;
-    // case TextcallA:
-    //   break;
-    // case CmdA:
-    //   break;
-    // case CmdcallA:
-    //   break;
     case PictureA:
       /*如果没有输入文字，则只是显示图片*/
       if(eDisplay_Data.DATAMODA == 0)
@@ -647,10 +649,6 @@ void Analyze_Wirle_Data(uint8_t *dat, uint32_t datlen)
       ackdata[10]=(uint8_t)sCRC;
       ackdata[11]=0xEE;
       ackdata[12]=0x00;
-      // if(!Picture_param_write(TabFaceA,dat,datlen)) ackdata[8]=0x00;
-//      picpramdata.tfac = TabFaceA;
-//      memcpy(picpramdata.tdata,dat,sizeof(picpramdata.tdata));
-//      picpramdata.tdatlen = datlen;
       if(Picture_param_write(TabFaceA,dat,datlen)) ackdata[8]=0x00;    
       BLE_Answer_Data(ackdata,12);
       break;
@@ -685,12 +683,6 @@ void Analyze_Wirle_Data(uint8_t *dat, uint32_t datlen)
        ackdata[10]=0x00;      
        BLE_Answer_Data(ackdata,10);
       break;
-    // case TextcallB:
-    //   break;
-    // case CmdB:
-    //   break;
-    // case CmdcallB:
-    //   break;
     case PictureB:
       /*如果没有输入文字，则只是显示图片*/
       if(eDisplay_Data.DATAMODB == 0)
@@ -758,10 +750,6 @@ void Analyze_Wirle_Data(uint8_t *dat, uint32_t datlen)
       ackdata[10]=(uint8_t)sCRC;
       ackdata[11]=0xEE;
       ackdata[12]=0x00;
-      // if(!Picture_param_write(TabFaceAB,dat,datlen)) ackdata[8]=0x00;   
-//      picpramdata.tfac = TabFaceAB;
-//      memcpy(picpramdata.tdata,dat,sizeof(picpramdata.tdata));
-//      picpramdata.tdatlen = datlen;
       if(Picture_param_write(TabFaceAB,dat,datlen)) ackdata[8]=0x00;          
       BLE_Answer_Data(ackdata,12);
       break;  
