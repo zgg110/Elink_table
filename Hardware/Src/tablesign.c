@@ -210,8 +210,8 @@ void Display_Pix_Write(TableFace fac, uint8_t pict, uint8_t *data)
   uint8_t rxdat5[2];
   uint32_t wbaddr,redaddr;
   uint32_t beforaddr=0,afterdaddr=0;
-  uint8_t deffval;   //单次差值变量
-  uint8_t valdown;   //总量递减变化值  
+  uint8_t deffval=0;   //单次差值变量
+  uint8_t valdown=0;   //总量递减变化值  
   uint16_t num=0;
   /*根据图片编号选择FLASH芯片内图片的地址*/
   wbaddr = Get_pic_Addr(fac, pict,WBColorPic);

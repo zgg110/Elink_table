@@ -48,7 +48,7 @@ void Lpower_sleep_config(void);
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-/*定义无连接计数*/
+/*定义无连接计�?*/
 uint8_t connttimeout=0;
 
 extern uint8_t Displayflag;
@@ -67,7 +67,7 @@ osThreadId_t getBLETaskHandle;
 const osThreadAttr_t getBLETask_attributes = {
   .name = "getBLETask",
   .priority = (osPriority_t) osPriorityHigh,
-  .stack_size = 256 * 20
+  .stack_size = 256 * 24
 };
 /* Definitions for ConfigdisTask */
 osThreadId_t ConfigdisTaskHandle;
@@ -116,7 +116,7 @@ void MX_FREERTOS_Init(void) {
 
   /* Create the queue(s) */
   /* creation of QueueBLEusart */
-  QueueBLEusartHandle = osMessageQueueNew (300, sizeof(uint8_t), &QueueBLEusart_attributes);
+  QueueBLEusartHandle = osMessageQueueNew (1100, sizeof(uint8_t), &QueueBLEusart_attributes);
 
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
@@ -161,7 +161,7 @@ void GetBLETask(void *argument)
       while(1)
       {
         /*将获取的数据放入接收字符串中*/        
-        if(osMessageQueueGet(QueueBLEusartHandle, &ebuff, NULL, 200) == osOK)
+        if(osMessageQueueGet(QueueBLEusartHandle, &ebuff, NULL, 300) == osOK)
         {
           BLEUart2RxData[BLEUart2RxCnt++] = ebuff;  
         }  
@@ -193,7 +193,7 @@ void configdisTask(void *argument)
   /* Infinite loop */
   while(1)
   {
-    /*判断电平是否处于高电平，高电平处于连接状态*/
+    /*判断电平是否处于高电平，高电平处于连接状�?*/
     if( BLEWakeUp == 0 )  
     {
       if(connttimeout > 0) 
@@ -201,7 +201,7 @@ void configdisTask(void *argument)
         connttimeout=0;
       }
     }
-    /*判断是否在显示屏幕*/
+    /*判断是否在显示屏�?*/
     else if(Displayflag == 1)
     {
       if((TABLEA_BUSY() != 0) || (TABLEB_BUSY() != 0))
@@ -218,24 +218,24 @@ void configdisTask(void *argument)
     {
       connttimeout++;
       user_main_info("BLE connect timeout %d",connttimeout);
-      /*如果断开设备之后6秒，则进入显示设备消息显示*/
+      /*如果断开设备之后6秒，则进入显示设备消息显�?*/
       if(connttimeout > 4)
       {
-        /*检测设备是否有输入数据并进行显示*/
+        /*�?测设备是否有输入数据并进行显�?*/
         if(eDisplay_Data.DATAMODA)
         {
           TableSignSeting(TabFaceA,eDisplay_Data.PICADDRA,eDisplay_Data.DATAMODA);
           eDisplay_Data.DATAMODA = Picnone;
           eDisplay_Data.PICADDRA = 0;
         }
-        /*检测设备是否有输入数据并进行显示*/
+        /*�?测设备是否有输入数据并进行显�?*/
         if(eDisplay_Data.DATAMODB)
         {
           TableSignSeting(TabFaceB,eDisplay_Data.PICADDRB,eDisplay_Data.DATAMODB);
           eDisplay_Data.DATAMODB = Picnone;
           eDisplay_Data.PICADDRB = 0;
         }
-        /*检测设备是否有输入数据并进行显示*/
+        /*�?测设备是否有输入数据并进行显�?*/
         if(eDisplay_Data.DATAMODAB)
         {
           TableSignSeting(TabFaceAB,eDisplay_Data.PICADDRAB,eDisplay_Data.DATAMODAB);
@@ -243,7 +243,7 @@ void configdisTask(void *argument)
           eDisplay_Data.PICADDRAB = 0;          
         }        
       }
-      /*如果超时将设备进入休眠模式*/
+      /*如果超时将设备进入休眠模�?*/
       if(connttimeout > 10)
       {
         connttimeout = 0;
@@ -265,7 +265,7 @@ void BLE_handle_uartirq(char ch)
   osMessageQueuePut(QueueBLEusartHandle, &ch, NULL, 0);
 }
 
-/*低功耗休眠函数设置*/
+/*低功耗休眠函数设�?*/
 void Lpower_sleep_config(void)
 {
   GPIO_InitTypeDef GPIO_InitStruct; 

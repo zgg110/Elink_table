@@ -339,8 +339,6 @@ void Text_Pic_Display(uint8_t pfac,uint8_t plit)
 *********************************************************************/
 int Picture_param_write(TableFace fac, uint8_t *dat, uint32_t datlen)
 {
-  PICTRANSTAT picstat;
-  
   static uint32_t firstaddr;
   static uint32_t nextaddr;   //下一包数据地址的位置
   static uint16_t ecount;
@@ -351,6 +349,7 @@ int Picture_param_write(TableFace fac, uint8_t *dat, uint32_t datlen)
   uint16_t datcont;  //跟随像素数据计数
   uint8_t nextmidval = 0;
   uint8_t picdata[1024]; //实际数据包
+  uint8_t ret = 0;
 
 user_main_info("Get Data"); 
   /*获取token*/
@@ -361,29 +360,29 @@ user_main_info("Get Data");
   if(plist > 200)
   {
     user_main_error("Picture location error");
-    return 1;
+    ret = 1;
   }
   /*获取颜色层*/
   pcolor = dat[5];
   if(pcolor > 2)
   {
     user_main_error("Picture Color error");
-    return 1;
+    ret = 1;
   }  
   /*获取包序号*/
   pcnt = ((dat[6]<<8)|dat[7]); 
  
   /*获取像素数据的个数*/
   datcont = ((dat[8]<<8)|dat[9]);
-//  if(datcont > (datlen-11))
-//  {
-//    user_main_error("Picture Pix error, Data:0x%04x",datcont);
-//    return 1;
-//  } 
+  if((datcont > (datlen-11)) && (datcont <= 1024))
+  {
+    user_main_error("Picture Pix error, Data:0x%04x",datcont);
+    ret = 1;
+  } 
 
   /*根据验证信息写入到对应的FALSH地址中*/
   memcpy(picdata,&dat[10],datcont);
-  if(datlen != 0)
+  if(ret == 0)
   {
     /*擦除*/
     if(pcnt==1)
@@ -412,7 +411,7 @@ user_main_info("Get Data");
     }
     else
     {
-      if(++ecount != pcnt) return 1;
+      if(++ecount != pcnt) ret = 1;
     }
 
     user_main_debug("wirte falsh!!");   
@@ -432,10 +431,12 @@ user_main_info("Get Data");
     {
     // if((256-(addr%256)) > fontdata.Textsize/8)
     // user_main_debug("wirte falsh!!");
+      osDelay(1);
       W25X_FLASH_PageWrite(&picdata[n*256+nextmidval],n*256+nextaddr,256);
     }
     if(datcont%256 > 0)
-      W25X_FLASH_PageWrite(&picdata[datcont-(datcont%256)+nextmidval],(nextaddr+datcont)-(datcont%256),datcont%256);   //(nextaddr+datcont)-(datcont%256)  
+      W25X_FLASH_PageWrite(&picdata[datcont-(datcont%256)+nextmidval],(nextaddr+datcont)-(datcont%256),datcont%256);   //(nextaddr+datcont)-(datcont%256) 
+//    osDelay(1);
     user_main_debug("wirte falsh finish!!");
     // /*每256字节为一个单位，剩余的单独写入*/
     // for(uint16_t n=0;n<(datcont/256);n++)
@@ -452,33 +453,14 @@ user_main_info("Get Data");
     /*获取下一个数据包的开始位置*/
     nextaddr += datcont;
   }
-//   /*判断是否为最后一包数据*/
-//   user_main_info("eWaitPicSta = %d",eWaitPicSta);
-//  if(eWaitPicSta == WAITPIC)
-//  {
-//    user_main_info("comPicFinishFlag = %d",comPicFinishFlag);
-//    /*判断最后一包数据*/
-//    if(comPicFinishFlag == 1)  //(nextaddr-firstaddr)>=48000  (pcnt >= 47) && (pcolor == 0x02)
-//    {
-//      comPicFinishFlag = 0;
-//      if(eTableDisplayType == 0)
-//      {
-//        eTableDisplayType = 1;    
-//        Only_Pic_Display(*(dat+1),plist);
-//      }
-//      else
-//      {
-//        Text_Pic_Display(eTextandPicFlag,plist);
-//      }
-//      picstat = pictfinish;
-//    }
-//    else
-//      picstat = pictraning;
-////    Putstat_Queue_Event(&picstat);    
-//  }
+
   user_main_info("picter input to flash packet finish,picture number: %d, packet number: %d",plist,pcnt); 
 
-  return 0;
+  if(ret == 1)
+  {
+    memset(&eDisplay_Data,0,sizeof(eDisplay_Data));
+  }
+  return ret;
 }
 
 /******************************************************************
@@ -810,11 +792,11 @@ void Analyze_Wirle_Data(uint8_t *dat, uint32_t datlen)
 **********************************************************************************/
 void Rev_DataAnalye(EXTEVENT pevent, uint8_t *rdata, uint32_t rlen)
 {
-  // /*打印接收数据LOG*/
-  // LOG("ble RX:");
-  // for(int i=0;i<rlen;i++)
-  //   LOG(" %002x",rdata[i]);
-  // LOG("\r\n");      
+//   /*打印接收数据LOG*/
+//   LOG("ble RX:");
+//   for(int i=0;i<rlen;i++)
+//     LOG(" %002x",rdata[i]);
+//   LOG("\r\n");      
   
   /*判断接收到的数据是否符合正常数据长度，如果不符合可以直接PASS掉*/
   if(rlen > 5)
