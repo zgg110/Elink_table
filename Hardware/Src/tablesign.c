@@ -186,7 +186,7 @@ int CheckTableBusy(TableFace fac,uint32_t timeout)
     default:
       while(tim++ < timeout)
       {
-        if((TABLEA_BUSY() != 0)||(TABLEB_BUSY() != 0))return 0;
+        if((TABLEA_BUSY() != 0)&&(TABLEB_BUSY() != 0))return 0;
         // osDelay(1);
       }
       break;
@@ -370,9 +370,14 @@ void Display_Pix_Write(TableFace fac, uint8_t pict, uint8_t *data)
 ********************************************************************/
 void Display_Pic_Write(TableFace fac, uint8_t pict, uint8_t *data)
 {
+  int picfd=0;  
   uint8_t rxdat1[PIC_ROW_SIZE];
+  uint8_t rxdat5[2];  
 
   uint32_t wbaddr,redaddr;
+  uint32_t beforaddr=0,afterdaddr=0;  
+  uint8_t deffval=0;   //单次差值变量
+  uint8_t valdown=0;   //总量递减变化值   
   /*根据图片编号选择FLASH芯片内图片的地址*/
   wbaddr = Get_pic_Addr(fac, pict,WBColorPic);
   /*宽度断行*/
@@ -383,6 +388,40 @@ void Display_Pic_Write(TableFace fac, uint8_t pict, uint8_t *data)
     {
         /*需要读取图片位置的像素同时将黑白显示到屏幕*/
         W25X_BufferRead(rxdat1, wbaddr + i*PIC_ROW_SIZE, PIC_ROW_SIZE);
+        
+        valdown = PIC_ROW_SIZE;
+        /*当递减值为0时跳出*/
+        while(valdown)
+        {
+          // user_main_debug("befor valdown:%d\n",valdown);
+          /*相减等于0则跳出循环*/
+          if(afterdaddr == beforaddr)
+          {
+            /*读取两个字节*/
+            W25X_BufferRead(rxdat5,wbaddr+picfd*2,2);   
+            //  user_main_debug("flash data %02x %02x",rxdat5[0],rxdat5[1]);         
+            beforaddr = rxdat5[1] + afterdaddr;
+            picfd++;
+            // user_main_debug("data get size:%d\n",picfd);            
+          }          
+          if((beforaddr-afterdaddr) < valdown)     //beforaddr - deffval
+          {
+            deffval = beforaddr-afterdaddr;
+            /*每次数组为100有相应的字节个数写入后递减*/  
+            valdown -= deffval;             
+            afterdaddr += deffval;    //deffval += deffval;
+          }         
+          else if((beforaddr-afterdaddr) >= valdown)
+          {
+            /*确定要写入的字节个数*/
+            deffval = valdown;
+            valdown -= valdown;
+            afterdaddr += deffval;          
+          } 
+          // user_main_debug("after valdown: %d,beforaddr: %08x,afterdaddr: %08x\n",valdown,beforaddr,afterdaddr);
+          memset(&rxdat1[100-valdown-deffval], rxdat5[0], deffval);
+        }        
+        
         TableSignWriteData(fac,rxdat1,PIC_ROW_SIZE);
     }
   }
@@ -394,6 +433,39 @@ void Display_Pic_Write(TableFace fac, uint8_t pict, uint8_t *data)
     {
         /*需要读取图片位置的像素同时将红色显示到屏幕*/
         W25X_BufferRead(rxdat1, redaddr + i*PIC_ROW_SIZE, PIC_ROW_SIZE);
+        valdown = PIC_ROW_SIZE;
+        /*当递减值为0时跳出*/
+        while(valdown)
+        {
+          // user_main_debug("befor valdown:%d\n",valdown);
+          /*相减等于0则跳出循环*/
+          if(afterdaddr == beforaddr)
+          {
+            /*读取两个字节*/
+            W25X_BufferRead(rxdat5,wbaddr+picfd*2,2);   
+            //  user_main_debug("flash data %02x %02x",rxdat5[0],rxdat5[1]);         
+            beforaddr = rxdat5[1] + afterdaddr;
+            picfd++;
+            // user_main_debug("data get size:%d\n",picfd);            
+          }          
+          if((beforaddr-afterdaddr) < valdown)     //beforaddr - deffval
+          {
+            deffval = beforaddr-afterdaddr;
+            /*每次数组为100有相应的字节个数写入后递减*/  
+            valdown -= deffval;             
+            afterdaddr += deffval;    //deffval += deffval;
+          }         
+          else if((beforaddr-afterdaddr) >= valdown)
+          {
+            /*确定要写入的字节个数*/
+            deffval = valdown;
+            valdown -= valdown;
+            afterdaddr += deffval;          
+          } 
+          // user_main_debug("after valdown: %d,beforaddr: %08x,afterdaddr: %08x\n",valdown,beforaddr,afterdaddr);
+          memset(&rxdat1[100-valdown-deffval], rxdat5[0], deffval);
+        }           
+        
         TableSignWriteData(fac,rxdat1,PIC_ROW_SIZE);
     }    
   }
@@ -451,7 +523,8 @@ void TableSignSeting(TableFace fac, uint8_t pict,TableDisplayType dis)
   user_main_info("Picture Display running");
   
   /*设置定时检查是否投屏完毕*/
-  while(CheckTableBusy(fac,5)) 
+  osDelay(500);
+  if(CheckTableBusy(fac,5)) 
   {
     Displayflag = 1;
     osDelay(500);

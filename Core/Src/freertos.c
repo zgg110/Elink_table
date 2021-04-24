@@ -204,7 +204,7 @@ void configdisTask(void *argument)
     /*判断是否在显示屏�?*/
     else if(Displayflag == 1)
     {
-      if((TABLEA_BUSY() != 0) || (TABLEB_BUSY() != 0))
+      if((TABLEA_BUSY() != 0) && (TABLEB_BUSY() != 0))
       {
         Displayflag = 0;
         TABLEPOWOFF();
