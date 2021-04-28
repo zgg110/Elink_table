@@ -172,21 +172,33 @@ int CheckTableBusy(TableFace fac,uint32_t timeout)
     case TabFaceA:
       while(tim++ < timeout)
       {
-        if(TABLEA_BUSY() != 0)return 0;
+        if(TABLEA_BUSY() != 0)
+        {
+          Displayflag = 1;
+          return 0;
+        }
         // osDelay(1); 
       }
       break;
     case TabFaceB:
       while(tim++ < timeout)
       {
-        if(TABLEB_BUSY() != 0)return 0;
+        if(TABLEB_BUSY() != 0)
+        {
+          Displayflag = 2;
+          return 0;
+        }          
         // osDelay(1);
       }
       break;
     default:
       while(tim++ < timeout)
       {
-        if((TABLEA_BUSY() != 0)&&(TABLEB_BUSY() != 0))return 0;
+        if((TABLEA_BUSY() != 0)&&(TABLEB_BUSY() != 0))
+        {
+          Displayflag = 3;
+          return 0;
+        }          
         // osDelay(1);
       }
       break;
@@ -526,7 +538,6 @@ void TableSignSeting(TableFace fac, uint8_t pict,TableDisplayType dis)
   osDelay(500);
   if(CheckTableBusy(fac,5)) 
   {
-    Displayflag = 1;
     osDelay(500);
     return;
   }

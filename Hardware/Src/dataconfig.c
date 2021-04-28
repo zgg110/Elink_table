@@ -351,7 +351,8 @@ int Picture_param_write(TableFace fac, uint8_t *dat, uint32_t datlen)
   uint8_t picdata[1024]; //实际数据包
   uint8_t ret = 0;
 
-user_main_info("Get Data"); 
+  user_main_info("Get Data"); 
+  eDisplay_Data.WIRTEDAT = 0;
   /*获取token*/
   // tokendata = ((dat[2]<<8)|dat[3]);
   /*获取图片编号*/
@@ -374,14 +375,17 @@ user_main_info("Get Data");
  
   /*获取像素数据的个数*/
   datcont = ((dat[8]<<8)|dat[9]);
-  if((datcont > (datlen-11)) && (datcont <= 1024))
+  if((datcont > (datlen-11)) || (datcont > 1024))
   {
     user_main_error("Picture Pix error, Data:0x%04x",datcont);
     ret = 1;
-  } 
+  }
+  else
+  {
+    /*根据验证信息写入到对应的FALSH地址中*/
+    memcpy(picdata,&dat[10],datcont);    
+  }
 
-  /*根据验证信息写入到对应的FALSH地址中*/
-  memcpy(picdata,&dat[10],datcont);
   if(ret == 0)
   {
     /*擦除*/
@@ -411,54 +415,62 @@ user_main_info("Get Data");
     }
     else
     {
-      if(++ecount != pcnt) ret = 1;
+      if(++ecount != pcnt) 
+      {
+        user_main_debug("Picture ecount error, Data:%d ,ecount:%d",datcont,ecount);
+        ret = 1;
+      }
     }
-
-    user_main_debug("wirte falsh!!");   
-    /*方法一*/
-    /*判断当前地址是否为256的整数倍*/
-    if((nextaddr%256 > 0) && (datcont > (256-(nextaddr%256))))
+    
+    /*继续判断是否出现接收数据异常*/
+    if(ret == 0)
     {
-      // user_main_debug("wirte %d!!",256-(nextaddr%256));
-      W25X_FLASH_PageWrite(&picdata[0],nextaddr,256-(nextaddr%256));
-      // user_main_debug("wirte 1 finish!!");
-      nextmidval = 256-(nextaddr%256);
-      nextaddr += nextmidval;
-      datcont -= nextmidval;
+      user_main_debug("wirte falsh!!");   
+      /*方法一*/
+      /*判断当前地址是否为256的整数倍*/
+      if((nextaddr%256 > 0) && (datcont > (256-(nextaddr%256))))
+      {
+        // user_main_debug("wirte %d!!",256-(nextaddr%256));
+        W25X_FLASH_PageWrite(&picdata[0],nextaddr,256-(nextaddr%256));
+        // user_main_debug("wirte 1 finish!!");
+        nextmidval = 256-(nextaddr%256);
+        nextaddr += nextmidval;
+        datcont -= nextmidval;
+      }
+      /*每256字节为一个单位，剩余的单独写入*/
+      for(uint16_t n=0;n<(datcont/256);n++)
+      {
+      // if((256-(addr%256)) > fontdata.Textsize/8)
+      // user_main_debug("wirte falsh!!");
+        osDelay(1);
+        W25X_FLASH_PageWrite(&picdata[n*256+nextmidval],n*256+nextaddr,256);
+      }
+      if(datcont%256 > 0)
+        W25X_FLASH_PageWrite(&picdata[datcont-(datcont%256)+nextmidval],(nextaddr+datcont)-(datcont%256),datcont%256);   //(nextaddr+datcont)-(datcont%256) 
+  //    osDelay(1);
+      user_main_debug("wirte falsh finish!!");
+      // /*每256字节为一个单位，剩余的单独写入*/
+      // for(uint16_t n=0;n<(datcont/256);n++)
+      // // if((256-(addr%256)) > fontdata.Textsize/8)
+      //   W25X_FLASH_PageWrite(&picdata[n*256],n*256+nextaddr,256);
+      // if(datcont%256 > 0)
+      //   W25X_FLASH_PageWrite(&picdata[datcont-(datcont%256)],(nextaddr+datcont)-(datcont%256),datcont%256);   //(nextaddr+datcont)-(datcont%256)      
+      /*方法二*/
+      // for(uint16_t n=0;n<datcont;n++)
+      // {
+      //   W25X_FLASH_PageWrite(&picdata[n],nextaddr+n,1);
+      //   osDelay(1);
+      // }
+      /*获取下一个数据包的开始位置*/
+      nextaddr += datcont;
     }
-    /*每256字节为一个单位，剩余的单独写入*/
-    for(uint16_t n=0;n<(datcont/256);n++)
-    {
-    // if((256-(addr%256)) > fontdata.Textsize/8)
-    // user_main_debug("wirte falsh!!");
-      osDelay(1);
-      W25X_FLASH_PageWrite(&picdata[n*256+nextmidval],n*256+nextaddr,256);
-    }
-    if(datcont%256 > 0)
-      W25X_FLASH_PageWrite(&picdata[datcont-(datcont%256)+nextmidval],(nextaddr+datcont)-(datcont%256),datcont%256);   //(nextaddr+datcont)-(datcont%256) 
-//    osDelay(1);
-    user_main_debug("wirte falsh finish!!");
-    // /*每256字节为一个单位，剩余的单独写入*/
-    // for(uint16_t n=0;n<(datcont/256);n++)
-    // // if((256-(addr%256)) > fontdata.Textsize/8)
-    //   W25X_FLASH_PageWrite(&picdata[n*256],n*256+nextaddr,256);
-    // if(datcont%256 > 0)
-    //   W25X_FLASH_PageWrite(&picdata[datcont-(datcont%256)],(nextaddr+datcont)-(datcont%256),datcont%256);   //(nextaddr+datcont)-(datcont%256)      
-    /*方法二*/
-    // for(uint16_t n=0;n<datcont;n++)
-    // {
-    //   W25X_FLASH_PageWrite(&picdata[n],nextaddr+n,1);
-    //   osDelay(1);
-    // }
-    /*获取下一个数据包的开始位置*/
-    nextaddr += datcont;
   }
-
   user_main_info("picter input to flash packet finish,picture number: %d, packet number: %d",plist,pcnt); 
 
   if(ret == 1)
   {
-    memset(&eDisplay_Data,0,sizeof(eDisplay_Data));
+    eDisplay_Data.WIRTEDAT = 1;
+    //    memset(&eDisplay_Data,0,sizeof(eDisplay_Data));
   }
   return ret;
 }
@@ -491,6 +503,8 @@ uint32_t Get_pic_Addr(TableFace fac, uint8_t pictil, TableColorType col)
  * *****************************************************************/
 void BLE_Answer_Data(uint8_t *pData, uint16_t Size) 
 {
+//  memset(BLEUart2RxData,0,sizeof(BLEUart2RxData));
+//  BLEUart2RxCnt = 0;
   BLE_Send_Data(pData,Size);
   // user_main_debug("Answer Data:%02x",pData);
 }
@@ -498,6 +512,9 @@ void BLE_Answer_Data(uint8_t *pData, uint16_t Size)
 void BLE_Answer_Type(void)
 {
   uint8_t ackdata[10]={0xFF,0xA1,0xFF,0xFF,0x00,0x01,0x00,0x00,0x00,0xEE};
+//  osDelay(500);
+//  memset(BLEUart2RxData,0,sizeof(BLEUart2RxData));
+//  BLEUart2RxCnt = 0;      
   BLE_Answer_Data(ackdata,10);
 }
 
@@ -841,7 +858,9 @@ void Rev_DataAnalye(EXTEVENT pevent, uint8_t *rdata, uint32_t rlen)
     LOG("ble error RX:");
     for(int i=0;i<rlen;i++)
       LOG(" %002x",rdata[i]);
-    LOG("\r\n");           
+    LOG("\r\n");  
+    /*发送数据错误应答*/
+    BLE_Answer_Type();    
   } 
 }
 

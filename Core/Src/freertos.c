@@ -51,6 +51,9 @@ void Lpower_sleep_config(void);
 /*定义无连接计�?*/
 uint8_t connttimeout=0;
 
+uint32_t BLEUart2RxCnt=0;
+uint8_t  BLEUart2RxData[1124] = {0}; 
+
 extern uint8_t Displayflag;
 
 extern UART_HandleTypeDef huart2;
@@ -67,14 +70,14 @@ osThreadId_t getBLETaskHandle;
 const osThreadAttr_t getBLETask_attributes = {
   .name = "getBLETask",
   .priority = (osPriority_t) osPriorityHigh,
-  .stack_size = 256 * 24
+  .stack_size = 1800 * 4
 };
 /* Definitions for ConfigdisTask */
 osThreadId_t ConfigdisTaskHandle;
 const osThreadAttr_t ConfigdisTask_attributes = {
   .name = "ConfigdisTask",
   .priority = (osPriority_t) osPriorityLow,
-  .stack_size = 128 * 8
+  .stack_size = 500 * 4
 };
 /* Definitions for QueueBLEusart */
 osMessageQueueId_t QueueBLEusartHandle;
@@ -147,8 +150,6 @@ void GetBLETask(void *argument)
   /* USER CODE BEGIN GetBLETask */
   uint8_t indata;
   uint8_t ebuff;
-  uint32_t BLEUart2RxCnt=0;
-  uint8_t  BLEUart2RxData[1124] = {0}; 
   HAL_UART_Receive_IT(&_BLE_USART, &indata, 1);
   
   memset(&eDisplay_Data,0,sizeof(eDisplay_Data));
@@ -157,24 +158,34 @@ void GetBLETask(void *argument)
   {
     if(osMessageQueueGet(QueueBLEusartHandle, &ebuff, NULL, portMAX_DELAY) == osOK)
     {
-      BLEUart2RxData[BLEUart2RxCnt++] = ebuff;
-      while(1)
-      {
-        /*将获取的数据放入接收字符串中*/        
-        if(osMessageQueueGet(QueueBLEusartHandle, &ebuff, NULL, 300) == osOK)
-        {
-          BLEUart2RxData[BLEUart2RxCnt++] = ebuff;  
-        }  
-        else
-        {         
+//      BLEUart2RxData[BLEUart2RxCnt++] = ebuff;
+      /*设置接收超时时间，时间越长可等待蓝牙容错率越�?*/
+      osDelay(500);
+//      HAL_NVIC_DisableIRQ(USART2_IRQn);
+//      while(1)
+//      {
+//        /*将获取的数据放入接收字符串中*/        
+//        if(osMessageQueueGet(QueueBLEusartHandle, &ebuff, NULL, 300) == osOK)
+//        {
+//          BLEUart2RxData[BLEUart2RxCnt++] = ebuff;  
+//        }  
+//        else
+//        {         
+//          /*接收数据完毕处理相应信息*/
+//          Rev_DataAnalye(BLEEVENT,BLEUart2RxData,BLEUart2RxCnt);
+//          /*清理相关BUFF*/
+//          memset(BLEUart2RxData,0,sizeof(BLEUart2RxData));
+//          BLEUart2RxCnt = 0;
+//          break;
+//        }                
+//      }   
           /*接收数据完毕处理相应信息*/
+        if(BLEUart2RxData[0] == 0xFF)
           Rev_DataAnalye(BLEEVENT,BLEUart2RxData,BLEUart2RxCnt);
-          /*清理相关BUFF*/
+//          HAL_NVIC_EnableIRQ(USART2_IRQn);
+//          /*清理相关BUFF*/
           memset(BLEUart2RxData,0,sizeof(BLEUart2RxData));
-          BLEUart2RxCnt = 0;
-          break;
-        }                
-      }      
+          BLEUart2RxCnt = 0;      
     }
   }
   /* USER CODE END GetBLETask */
@@ -202,12 +213,29 @@ void configdisTask(void *argument)
       }
     }
     /*判断是否在显示屏�?*/
-    else if(Displayflag == 1)
+    else if(Displayflag)
     {
-      if((TABLEA_BUSY() != 0) && (TABLEB_BUSY() != 0))
+      switch(Displayflag)
       {
-        Displayflag = 0;
-        TABLEPOWOFF();
+        case 1:
+          if(TABLEA_BUSY() != 0)  
+          {
+            Displayflag = 0;
+            TABLEPOWOFF();
+          }            
+          break;
+        case 2:
+          if(TABLEB_BUSY() != 0)
+          {
+            Displayflag = 0;
+            TABLEPOWOFF();          
+          }
+        default: 
+          if((TABLEA_BUSY() != 0) && (TABLEB_BUSY() != 0))
+          {
+            Displayflag = 0;
+            TABLEPOWOFF();
+          }       
       }
       if(connttimeout > 0) 
       {
@@ -221,6 +249,8 @@ void configdisTask(void *argument)
       /*如果断开设备之后6秒，则进入显示设备消息显�?*/
       if(connttimeout > 4)
       {
+        if(eDisplay_Data.WIRTEDAT == 1)
+          memset(&eDisplay_Data,0,sizeof(eDisplay_Data));          
         /*�?测设备是否有输入数据并进行显�?*/
         if(eDisplay_Data.DATAMODA)
         {
