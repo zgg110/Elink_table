@@ -192,7 +192,7 @@ typedef struct {
 
 typedef struct 
 {
-  /* 是否有数据写入 */
+  /* 表示写入状态 */
   uint8_t           WIRTEDAT;
   /* 设备A面显示信息模式 */
   TableDisplayType  DATAMODA;

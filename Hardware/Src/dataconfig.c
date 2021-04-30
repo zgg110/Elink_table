@@ -12,6 +12,7 @@
 #include "w25q128.h"
 #include "blecomm.h"
 #include "mbcrc.h"
+#include "adc.h"
 //#include "battery_adc.h"
 
 /*默认配置参数*/
@@ -338,8 +339,6 @@ void Text_Pic_Display(uint8_t pfac,uint8_t plit)
 *********************************************************************/
 int Picture_param_write(TableFace fac, uint8_t *dat, uint32_t datlen)
 {
-  PICTRANSTAT picstat;
-  
   static uint32_t firstaddr;
   static uint32_t nextaddr;   //下一包数据地址的位置
   static uint16_t ecount;
@@ -350,8 +349,10 @@ int Picture_param_write(TableFace fac, uint8_t *dat, uint32_t datlen)
   uint16_t datcont;  //跟随像素数据计数
   uint8_t nextmidval = 0;
   uint8_t picdata[1024]; //实际数据包
+  uint8_t ret = 0;
 
-user_main_info("Get Data"); 
+  user_main_info("Get Data"); 
+  eDisplay_Data.WIRTEDAT = 0;
   /*获取token*/
   // tokendata = ((dat[2]<<8)|dat[3]);
   /*获取图片编号*/
@@ -360,29 +361,32 @@ user_main_info("Get Data");
   if(plist > 200)
   {
     user_main_error("Picture location error");
-    return 1;
+    ret = 1;
   }
   /*获取颜色层*/
   pcolor = dat[5];
   if(pcolor > 2)
   {
     user_main_error("Picture Color error");
-    return 1;
+    ret = 1;
   }  
   /*获取包序号*/
   pcnt = ((dat[6]<<8)|dat[7]); 
  
   /*获取像素数据的个数*/
   datcont = ((dat[8]<<8)|dat[9]);
-//  if(datcont > (datlen-11))
-//  {
-//    user_main_error("Picture Pix error, Data:0x%04x",datcont);
-//    return 1;
-//  } 
+  if((datcont > (datlen-11)) || (datcont > 1024))
+  {
+    user_main_error("Picture Pix error, Data:0x%04x",datcont);
+    ret = 1;
+  }
+  else
+  {
+    /*根据验证信息写入到对应的FALSH地址中*/
+    memcpy(picdata,&dat[10],datcont);    
+  }
 
-  /*根据验证信息写入到对应的FALSH地址中*/
-  memcpy(picdata,&dat[10],datcont);
-  if(datlen != 0)
+  if(ret == 0)
   {
     /*擦除*/
     if(pcnt==1)
@@ -411,73 +415,64 @@ user_main_info("Get Data");
     }
     else
     {
-      if(++ecount != pcnt) return 1;
+      if(++ecount != pcnt) 
+      {
+        user_main_debug("Picture ecount error, Data:%d ,ecount:%d",datcont,ecount);
+        ret = 1;
+      }
     }
-
-    user_main_debug("wirte falsh!!");   
-    /*方法一*/
-    /*判断当前地址是否为256的整数倍*/
-    if((nextaddr%256 > 0) && (datcont > (256-(nextaddr%256))))
+    
+    /*继续判断是否出现接收数据异常*/
+    if(ret == 0)
     {
-      // user_main_debug("wirte %d!!",256-(nextaddr%256));
-      W25X_FLASH_PageWrite(&picdata[0],nextaddr,256-(nextaddr%256));
-      // user_main_debug("wirte 1 finish!!");
-      nextmidval = 256-(nextaddr%256);
-      nextaddr += nextmidval;
-      datcont -= nextmidval;
+      user_main_debug("wirte falsh!!");   
+      /*方法一*/
+      /*判断当前地址是否为256的整数倍*/
+      if((nextaddr%256 > 0) && (datcont > (256-(nextaddr%256))))
+      {
+        // user_main_debug("wirte %d!!",256-(nextaddr%256));
+        W25X_FLASH_PageWrite(&picdata[0],nextaddr,256-(nextaddr%256));
+        // user_main_debug("wirte 1 finish!!");
+        nextmidval = 256-(nextaddr%256);
+        nextaddr += nextmidval;
+        datcont -= nextmidval;
+      }
+      /*每256字节为一个单位，剩余的单独写入*/
+      for(uint16_t n=0;n<(datcont/256);n++)
+      {
+      // if((256-(addr%256)) > fontdata.Textsize/8)
+      // user_main_debug("wirte falsh!!");
+        osDelay(1);
+        W25X_FLASH_PageWrite(&picdata[n*256+nextmidval],n*256+nextaddr,256);
+      }
+      if(datcont%256 > 0)
+        W25X_FLASH_PageWrite(&picdata[datcont-(datcont%256)+nextmidval],(nextaddr+datcont)-(datcont%256),datcont%256);   //(nextaddr+datcont)-(datcont%256) 
+  //    osDelay(1);
+      user_main_debug("wirte falsh finish!!");
+      // /*每256字节为一个单位，剩余的单独写入*/
+      // for(uint16_t n=0;n<(datcont/256);n++)
+      // // if((256-(addr%256)) > fontdata.Textsize/8)
+      //   W25X_FLASH_PageWrite(&picdata[n*256],n*256+nextaddr,256);
+      // if(datcont%256 > 0)
+      //   W25X_FLASH_PageWrite(&picdata[datcont-(datcont%256)],(nextaddr+datcont)-(datcont%256),datcont%256);   //(nextaddr+datcont)-(datcont%256)      
+      /*方法二*/
+      // for(uint16_t n=0;n<datcont;n++)
+      // {
+      //   W25X_FLASH_PageWrite(&picdata[n],nextaddr+n,1);
+      //   osDelay(1);
+      // }
+      /*获取下一个数据包的开始位置*/
+      nextaddr += datcont;
     }
-    /*每256字节为一个单位，剩余的单独写入*/
-    for(uint16_t n=0;n<(datcont/256);n++)
-    {
-    // if((256-(addr%256)) > fontdata.Textsize/8)
-    // user_main_debug("wirte falsh!!");
-      W25X_FLASH_PageWrite(&picdata[n*256+nextmidval],n*256+nextaddr,256);
-    }
-    if(datcont%256 > 0)
-      W25X_FLASH_PageWrite(&picdata[datcont-(datcont%256)+nextmidval],(nextaddr+datcont)-(datcont%256),datcont%256);   //(nextaddr+datcont)-(datcont%256)  
-    user_main_debug("wirte falsh finish!!");
-    // /*每256字节为一个单位，剩余的单独写入*/
-    // for(uint16_t n=0;n<(datcont/256);n++)
-    // // if((256-(addr%256)) > fontdata.Textsize/8)
-    //   W25X_FLASH_PageWrite(&picdata[n*256],n*256+nextaddr,256);
-    // if(datcont%256 > 0)
-    //   W25X_FLASH_PageWrite(&picdata[datcont-(datcont%256)],(nextaddr+datcont)-(datcont%256),datcont%256);   //(nextaddr+datcont)-(datcont%256)      
-    /*方法二*/
-    // for(uint16_t n=0;n<datcont;n++)
-    // {
-    //   W25X_FLASH_PageWrite(&picdata[n],nextaddr+n,1);
-    //   osDelay(1);
-    // }
-    /*获取下一个数据包的开始位置*/
-    nextaddr += datcont;
   }
-//   /*判断是否为最后一包数据*/
-//   user_main_info("eWaitPicSta = %d",eWaitPicSta);
-//  if(eWaitPicSta == WAITPIC)
-//  {
-//    user_main_info("comPicFinishFlag = %d",comPicFinishFlag);
-//    /*判断最后一包数据*/
-//    if(comPicFinishFlag == 1)  //(nextaddr-firstaddr)>=48000  (pcnt >= 47) && (pcolor == 0x02)
-//    {
-//      comPicFinishFlag = 0;
-//      if(eTableDisplayType == 0)
-//      {
-//        eTableDisplayType = 1;    
-//        Only_Pic_Display(*(dat+1),plist);
-//      }
-//      else
-//      {
-//        Text_Pic_Display(eTextandPicFlag,plist);
-//      }
-//      picstat = pictfinish;
-//    }
-//    else
-//      picstat = pictraning;
-////    Putstat_Queue_Event(&picstat);    
-//  }
   user_main_info("picter input to flash packet finish,picture number: %d, packet number: %d",plist,pcnt); 
 
-  return 0;
+  if(ret == 1)
+  {
+    eDisplay_Data.WIRTEDAT = 1;
+    //    memset(&eDisplay_Data,0,sizeof(eDisplay_Data));
+  }
+  return ret;
 }
 
 /******************************************************************
@@ -508,6 +503,8 @@ uint32_t Get_pic_Addr(TableFace fac, uint8_t pictil, TableColorType col)
  * *****************************************************************/
 void BLE_Answer_Data(uint8_t *pData, uint16_t Size) 
 {
+//  memset(BLEUart2RxData,0,sizeof(BLEUart2RxData));
+//  BLEUart2RxCnt = 0;
   BLE_Send_Data(pData,Size);
   // user_main_debug("Answer Data:%02x",pData);
 }
@@ -515,6 +512,9 @@ void BLE_Answer_Data(uint8_t *pData, uint16_t Size)
 void BLE_Answer_Type(void)
 {
   uint8_t ackdata[10]={0xFF,0xA1,0xFF,0xFF,0x00,0x01,0x00,0x00,0x00,0xEE};
+//  osDelay(500);
+//  memset(BLEUart2RxData,0,sizeof(BLEUart2RxData));
+//  BLEUart2RxCnt = 0;      
   BLE_Answer_Data(ackdata,10);
 }
 
@@ -525,12 +525,14 @@ void BLE_Answer_Type(void)
  * *************************************************************************/
 void Pul_Cmd_Analyze(uint8_t *indat, uint32_t inlen, uint8_t *outdat, uint32_t *outlen)
 {
-  switch ((CmdType_f)*(indat+1))
+  uint32_t batval = 0;
+  
+  switch ((CmdType_f)*(indat+4))
   {
   /*版本号*/
   case Dversion:
     /*内部判断是设置还是查询*/
-    if((Workcmd_f)*(indat+2) == Watchcmd)
+    if((Workcmd_f)*(indat+5) == Watchcmd)
     {
       outdat[0] = Dversion;
       outdat[1] = Watchcmd;
@@ -548,7 +550,7 @@ void Pul_Cmd_Analyze(uint8_t *indat, uint32_t inlen, uint8_t *outdat, uint32_t *
   /*信号强度*/
   case Drssi:
     /*内部判断是设置还是查询*/
-    if((Workcmd_f)*(indat+2) == Watchcmd)
+    if((Workcmd_f)*(indat+5) == Watchcmd)
       ;
     else
       ;    
@@ -556,15 +558,25 @@ void Pul_Cmd_Analyze(uint8_t *indat, uint32_t inlen, uint8_t *outdat, uint32_t *
   /*电池电量*/  
   case Dbattery:
     /*内部判断是设置还是查询*/
-    if((Workcmd_f)*(indat+2) == Watchcmd)
-      ;
+    if((Workcmd_f)*(indat+5) == Watchcmd)
+    {
+//      Start_ADC1_work();
+//      batval = Get_ADC1_Value();
+//      End_ADC1_work();
+//      batval = (batval*1000/4095)*3;
+      batval = Get_Bat_Value() * 2;
+      outdat[0] = batval >> 8;
+      outdat[1] = batval;
+      *outlen = 2;      
+      user_main_debug("%d",batval);
+    }
     else
       ;  
     break;
   /*设备ID号*/
   case DevID:
     /*内部判断是设置还是查询*/
-    if((Workcmd_f)*(indat+2) == Watchcmd)
+    if((Workcmd_f)*(indat+5) == Watchcmd)
     {
       outdat[0] = DevID;
       outdat[1] = Watchcmd;
@@ -626,12 +638,6 @@ void Analyze_Wirle_Data(uint8_t *dat, uint32_t datlen)
        ackdata[10]=0x00;              
        BLE_Answer_Data(ackdata,10);
       break;
-    // case TextcallA:
-    //   break;
-    // case CmdA:
-    //   break;
-    // case CmdcallA:
-    //   break;
     case PictureA:
       /*如果没有输入文字，则只是显示图片*/
       if(eDisplay_Data.DATAMODA == 0)
@@ -647,10 +653,6 @@ void Analyze_Wirle_Data(uint8_t *dat, uint32_t datlen)
       ackdata[10]=(uint8_t)sCRC;
       ackdata[11]=0xEE;
       ackdata[12]=0x00;
-      // if(!Picture_param_write(TabFaceA,dat,datlen)) ackdata[8]=0x00;
-//      picpramdata.tfac = TabFaceA;
-//      memcpy(picpramdata.tdata,dat,sizeof(picpramdata.tdata));
-//      picpramdata.tdatlen = datlen;
       if(Picture_param_write(TabFaceA,dat,datlen)) ackdata[8]=0x00;    
       BLE_Answer_Data(ackdata,12);
       break;
@@ -685,12 +687,6 @@ void Analyze_Wirle_Data(uint8_t *dat, uint32_t datlen)
        ackdata[10]=0x00;      
        BLE_Answer_Data(ackdata,10);
       break;
-    // case TextcallB:
-    //   break;
-    // case CmdB:
-    //   break;
-    // case CmdcallB:
-    //   break;
     case PictureB:
       /*如果没有输入文字，则只是显示图片*/
       if(eDisplay_Data.DATAMODB == 0)
@@ -758,10 +754,6 @@ void Analyze_Wirle_Data(uint8_t *dat, uint32_t datlen)
       ackdata[10]=(uint8_t)sCRC;
       ackdata[11]=0xEE;
       ackdata[12]=0x00;
-      // if(!Picture_param_write(TabFaceAB,dat,datlen)) ackdata[8]=0x00;   
-//      picpramdata.tfac = TabFaceAB;
-//      memcpy(picpramdata.tdata,dat,sizeof(picpramdata.tdata));
-//      picpramdata.tdatlen = datlen;
       if(Picture_param_write(TabFaceAB,dat,datlen)) ackdata[8]=0x00;          
       BLE_Answer_Data(ackdata,12);
       break;  
@@ -776,7 +768,7 @@ void Analyze_Wirle_Data(uint8_t *dat, uint32_t datlen)
        ackdata[13]=(uint8_t)sCRC;
        ackdata[14]=0xEE;
        ackdata[15]=0x00;                
-       BLE_Answer_Data(ackdata,16);      
+       BLE_Answer_Data(ackdata,15);      
       break;
     case CmdB:
       ackdata[1]=CmdcallB;
@@ -822,11 +814,11 @@ void Analyze_Wirle_Data(uint8_t *dat, uint32_t datlen)
 **********************************************************************************/
 void Rev_DataAnalye(EXTEVENT pevent, uint8_t *rdata, uint32_t rlen)
 {
-  // /*打印接收数据LOG*/
-  // LOG("ble RX:");
-  // for(int i=0;i<rlen;i++)
-  //   LOG(" %002x",rdata[i]);
-  // LOG("\r\n");      
+   /*打印接收数据LOG*/
+   LOG("ble RX:");
+   for(int i=0;i<rlen;i++)
+     LOG(" %002x",rdata[i]);
+   LOG("\r\n");      
   
   /*判断接收到的数据是否符合正常数据长度，如果不符合可以直接PASS掉*/
   if(rlen > 5)
@@ -871,7 +863,9 @@ void Rev_DataAnalye(EXTEVENT pevent, uint8_t *rdata, uint32_t rlen)
     LOG("ble error RX:");
     for(int i=0;i<rlen;i++)
       LOG(" %002x",rdata[i]);
-    LOG("\r\n");           
+    LOG("\r\n");  
+    /*发送数据错误应答*/
+    BLE_Answer_Type();    
   } 
 }
 

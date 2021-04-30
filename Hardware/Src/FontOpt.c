@@ -14,13 +14,13 @@ extern uint8_t comPicFinishFlag;
 // uint32_t  Textlocat=820;
 // uint32_t  Textsize = 192;
 
-/*图片存储线程*/
-osThreadId_t picinputTaskHandle;
-const osThreadAttr_t picinputTask_attributes = {
-  .name = "picinputTask",
-  .priority = (osPriority_t) osPriorityNormal,
-  .stack_size = 1024 * 4
-};
+///*图片存储线程*/
+//osThreadId_t picinputTaskHandle;
+//const osThreadAttr_t picinputTask_attributes = {
+//  .name = "picinputTask",
+//  .priority = (osPriority_t) osPriorityNormal,
+//  .stack_size = 1024 * 4
+//};
 
 
 /*起始位置地址计算公式： BLACKTEXTBASE + (Textlocat/TABLEROW)*100 + Textlocat%TABLEROW*/
@@ -111,58 +111,58 @@ void InputTexttoFlash(Fontsparam fontdata)
 //   }
 // }
 
-/*************************************************************************************
- * 
- * 接收图片写入外部Flash任务
- * 
-*************************************************************************************/
-void pic_input_Task(void *argument)
-{
-  picDataParm rdat;
-  picDataParm *rldat;
-  while(1)
-  {
-    if(!GetPicData_Queue_Event(&rdat))
-    {
-      rldat=(picDataParm*)pvPortMalloc(sizeof(picDataParm));
-      Picture_param_write(rdat.tfac,rdat.tdata,rdat.tdatlen);
-      // uncompress_data_toflash(rdat.tfac,rdat.tdata,rdat.tdatlen);
-    }
-    while(1)
-    {
-      if(!GetPicDataING_Queue_Event(&rdat))
-      {
-        rldat->tfac = rdat.tfac;
-        memcpy(rldat->tdata,rdat.tdata,sizeof(rdat.tdata));
-        // uncompress_data_toflash(rdat.tfac,rdat.tdata,rdat.tdatlen);
-        Picture_param_write(rdat.tfac,rdat.tdata,rdat.tdatlen);
-      }
-      else
-      {
-        comPicFinishFlag = 1;
-        user_main_debug("rx finish!!!!!!!!!!!!!!!!!!!!!!!!\n");
-        // uncompress_data_toflash(rldat->tfac,rldat->tdata,0);
-        Picture_param_write(rldat->tfac,rldat->tdata,0);
-        vPortFree(rldat);
-        break;
-      }
-    }
-  }
-}
+///*************************************************************************************
+// * 
+// * 接收图片写入外部Flash任务
+// * 
+//*************************************************************************************/
+//void pic_input_Task(void *argument)
+//{
+//  picDataParm rdat;
+//  picDataParm *rldat;
+//  while(1)
+//  {
+//    if(!GetPicData_Queue_Event(&rdat))
+//    {
+//      rldat=(picDataParm*)pvPortMalloc(sizeof(picDataParm));
+//      Picture_param_write(rdat.tfac,rdat.tdata,rdat.tdatlen);
+//      // uncompress_data_toflash(rdat.tfac,rdat.tdata,rdat.tdatlen);
+//    }
+//    while(1)
+//    {
+//      if(!GetPicDataING_Queue_Event(&rdat))
+//      {
+//        rldat->tfac = rdat.tfac;
+//        memcpy(rldat->tdata,rdat.tdata,sizeof(rdat.tdata));
+//        // uncompress_data_toflash(rdat.tfac,rdat.tdata,rdat.tdatlen);
+//        Picture_param_write(rdat.tfac,rdat.tdata,rdat.tdatlen);
+//      }
+//      else
+//      {
+//        comPicFinishFlag = 1;
+//        user_main_debug("rx finish!!!!!!!!!!!!!!!!!!!!!!!!\n");
+//        // uncompress_data_toflash(rldat->tfac,rldat->tdata,0);
+//        Picture_param_write(rldat->tfac,rldat->tdata,0);
+//        vPortFree(rldat);
+//        break;
+//      }
+//    }
+//  }
+//}
 
-/*初始化创建图片写入线程*/
-int pic_input_init(void)
-{
-  if(!picinputTaskHandle)
-    picinputTaskHandle = osThreadNew(pic_input_Task, NULL, &picinputTask_attributes);
-  else
-  {
-    user_main_info("Picture Input Task Creat Fail!");
-    return 1;
-  }
-  user_main_info("Picture Input Task Creat Success!");
-  return 0;  
-}
+///*初始化创建图片写入线程*/
+//int pic_input_init(void)
+//{
+//  if(!picinputTaskHandle)
+//    picinputTaskHandle = osThreadNew(pic_input_Task, NULL, &picinputTask_attributes);
+//  else
+//  {
+//    user_main_info("Picture Input Task Creat Fail!");
+//    return 1;
+//  }
+//  user_main_info("Picture Input Task Creat Success!");
+//  return 0;  
+//}
 
 
 

@@ -23,6 +23,7 @@
 #include "stm32l4xx_it.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "usart.h"
 #include "blecomm.h"
 /* USER CODE END Includes */
 
@@ -62,6 +63,8 @@ extern TIM_HandleTypeDef htim16;
 
 /* USER CODE BEGIN EV */
 extern  uint8_t chdata;
+extern uint8_t BLEUart2RxData[1124];
+extern uint32_t BLEUart2RxCnt;
 /* USER CODE END EV */
 
 /******************************************************************************/
@@ -91,6 +94,9 @@ void HardFault_Handler(void)
   while (1)
   {
     /* USER CODE BEGIN W1_HardFault_IRQn 0 */
+      user_main_info("Reset Table!!!");
+      __set_FAULTMASK(1);
+      HAL_NVIC_SystemReset();        
     /* USER CODE END W1_HardFault_IRQn 0 */
   }
 }
@@ -185,8 +191,14 @@ void USART2_IRQHandler(void)
   HAL_UART_IRQHandler(&huart2);
   /* USER CODE BEGIN USART2_IRQn 1 */
   HAL_UART_Receive_IT(&huart2, &chdata, 1);
-  /* 将接收到的数据塞进接收数据队�? */
-  BLE_handle_uartirq(chdata);
+//  /* 将接收到的数据塞进接收数据队�? */
+//  BLE_handle_uartirq(chdata);
+  if(BLEUart2RxCnt == 0)
+  {
+    BLE_handle_uartirq(chdata);
+  }
+    BLEUart2RxData[BLEUart2RxCnt++] = chdata;  
+  
   /* USER CODE END USART2_IRQn 1 */
 }
 

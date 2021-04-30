@@ -48,8 +48,13 @@ void Lpower_sleep_config(void);
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-/*定义无连接计�?*/
+/*定义无连接计�?*/
 uint8_t connttimeout=0;
+
+uint32_t BLEUart2RxCnt=0;
+uint8_t  BLEUart2RxData[1124] = {0}; 
+
+extern uint8_t Displayflag;
 
 extern UART_HandleTypeDef huart2;
 
@@ -65,14 +70,14 @@ osThreadId_t getBLETaskHandle;
 const osThreadAttr_t getBLETask_attributes = {
   .name = "getBLETask",
   .priority = (osPriority_t) osPriorityHigh,
-  .stack_size = 256 * 20
+  .stack_size = 1800 * 4
 };
 /* Definitions for ConfigdisTask */
 osThreadId_t ConfigdisTaskHandle;
 const osThreadAttr_t ConfigdisTask_attributes = {
   .name = "ConfigdisTask",
   .priority = (osPriority_t) osPriorityLow,
-  .stack_size = 128 * 12
+  .stack_size = 500 * 4
 };
 /* Definitions for QueueBLEusart */
 osMessageQueueId_t QueueBLEusartHandle;
@@ -114,7 +119,7 @@ void MX_FREERTOS_Init(void) {
 
   /* Create the queue(s) */
   /* creation of QueueBLEusart */
-  QueueBLEusartHandle = osMessageQueueNew (300, sizeof(uint8_t), &QueueBLEusart_attributes);
+  QueueBLEusartHandle = osMessageQueueNew (1100, sizeof(uint8_t), &QueueBLEusart_attributes);
 
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
@@ -145,8 +150,6 @@ void GetBLETask(void *argument)
   /* USER CODE BEGIN GetBLETask */
   uint8_t indata;
   uint8_t ebuff;
-  uint32_t BLEUart2RxCnt=0;
-  uint8_t  BLEUart2RxData[1124] = {0}; 
   HAL_UART_Receive_IT(&_BLE_USART, &indata, 1);
   
   memset(&eDisplay_Data,0,sizeof(eDisplay_Data));
@@ -155,24 +158,34 @@ void GetBLETask(void *argument)
   {
     if(osMessageQueueGet(QueueBLEusartHandle, &ebuff, NULL, portMAX_DELAY) == osOK)
     {
-      BLEUart2RxData[BLEUart2RxCnt++] = ebuff;
-      while(1)
-      {
-        /*将获取的数据放入接收字符串中*/        
-        if(osMessageQueueGet(QueueBLEusartHandle, &ebuff, NULL, 200) == osOK)
-        {
-          BLEUart2RxData[BLEUart2RxCnt++] = ebuff;  
-        }  
-        else
-        {         
+//      BLEUart2RxData[BLEUart2RxCnt++] = ebuff;
+      /*设置接收超时时间，时间越长可等待蓝牙容错率越�?*/
+      osDelay(500);
+//      HAL_NVIC_DisableIRQ(USART2_IRQn);
+//      while(1)
+//      {
+//        /*将获取的数据放入接收字符串中*/        
+//        if(osMessageQueueGet(QueueBLEusartHandle, &ebuff, NULL, 300) == osOK)
+//        {
+//          BLEUart2RxData[BLEUart2RxCnt++] = ebuff;  
+//        }  
+//        else
+//        {         
+//          /*接收数据完毕处理相应信息*/
+//          Rev_DataAnalye(BLEEVENT,BLEUart2RxData,BLEUart2RxCnt);
+//          /*清理相关BUFF*/
+//          memset(BLEUart2RxData,0,sizeof(BLEUart2RxData));
+//          BLEUart2RxCnt = 0;
+//          break;
+//        }                
+//      }   
           /*接收数据完毕处理相应信息*/
+        if(BLEUart2RxData[0] == 0xFF)
           Rev_DataAnalye(BLEEVENT,BLEUart2RxData,BLEUart2RxCnt);
-          /*清理相关BUFF*/
+//          HAL_NVIC_EnableIRQ(USART2_IRQn);
+//          /*清理相关BUFF*/
           memset(BLEUart2RxData,0,sizeof(BLEUart2RxData));
-          BLEUart2RxCnt = 0;
-          break;
-        }                
-      }      
+          BLEUart2RxCnt = 0;      
     }
   }
   /* USER CODE END GetBLETask */
@@ -191,33 +204,68 @@ void configdisTask(void *argument)
   /* Infinite loop */
   while(1)
   {
-    /*判断电平是否处于高电平，高电平处于连接状态*/
-    if(BLEWakeUp == 0)
+    /*判断电平是否处于高电平，高电平处于连接状�?*/
+    if( BLEWakeUp == 0 )  
     {
-      if(connttimeout > 0) connttimeout=0;
+      if(connttimeout > 0) 
+      {
+        connttimeout=0;
+      }
+    }
+    /*判断是否在显示屏�?*/
+    else if(Displayflag)
+    {
+      switch(Displayflag)
+      {
+        case 1:
+          if(TABLEA_BUSY() != 0)  
+          {
+            Displayflag = 0;
+            TABLEPOWOFF();
+          }            
+          break;
+        case 2:
+          if(TABLEB_BUSY() != 0)
+          {
+            Displayflag = 0;
+            TABLEPOWOFF();          
+          }
+        default: 
+          if((TABLEA_BUSY() != 0) && (TABLEB_BUSY() != 0))
+          {
+            Displayflag = 0;
+            TABLEPOWOFF();
+          }       
+      }
+      if(connttimeout > 0) 
+      {
+        connttimeout=0;
+      }      
     }
     else
     {
       connttimeout++;
       user_main_info("BLE connect timeout %d",connttimeout);
-      /*如果断开设备之后6秒，则进入显示设备消息显示*/
-      if(connttimeout > 6)
+      /*如果断开设备之后6秒，则进入显示设备消息显�?*/
+      if(connttimeout > 4)
       {
-        /*检测设备是否有输入数据并进行显示*/
+        if(eDisplay_Data.WIRTEDAT == 1)
+          memset(&eDisplay_Data,0,sizeof(eDisplay_Data));          
+        /*�?测设备是否有输入数据并进行显�?*/
         if(eDisplay_Data.DATAMODA)
         {
           TableSignSeting(TabFaceA,eDisplay_Data.PICADDRA,eDisplay_Data.DATAMODA);
           eDisplay_Data.DATAMODA = Picnone;
           eDisplay_Data.PICADDRA = 0;
         }
-        /*检测设备是否有输入数据并进行显示*/
+        /*�?测设备是否有输入数据并进行显�?*/
         if(eDisplay_Data.DATAMODB)
         {
           TableSignSeting(TabFaceB,eDisplay_Data.PICADDRB,eDisplay_Data.DATAMODB);
           eDisplay_Data.DATAMODB = Picnone;
           eDisplay_Data.PICADDRB = 0;
         }
-        /*检测设备是否有输入数据并进行显示*/
+        /*�?测设备是否有输入数据并进行显�?*/
         if(eDisplay_Data.DATAMODAB)
         {
           TableSignSeting(TabFaceAB,eDisplay_Data.PICADDRAB,eDisplay_Data.DATAMODAB);
@@ -225,13 +273,14 @@ void configdisTask(void *argument)
           eDisplay_Data.PICADDRAB = 0;          
         }        
       }
-      /*如果超时将设备进入休眠模式*/
-      if(connttimeout > 20)
+      /*如果超时将设备进入休眠模�?*/
+      if(connttimeout > 10)
       {
         connttimeout = 0;
+        TABLEPOWOFF();
         user_main_info("BLE connect timeout entry");
         /*断开超时之后进入休眠*/
-        Lpower_sleep_config();
+        Lpower_sleep_config();     
       }
     }
     osDelay(500);
@@ -246,41 +295,40 @@ void BLE_handle_uartirq(char ch)
   osMessageQueuePut(QueueBLEusartHandle, &ch, NULL, 0);
 }
 
-/*低功耗休眠函数设置*/
+/*低功耗休眠函数设�?*/
 void Lpower_sleep_config(void)
 {
-  uint8_t indata;
   GPIO_InitTypeDef GPIO_InitStruct; 
   
   user_main_info("BLE no connent device will sleep");  
   SPI_DeInit();
   ADC_DeInit();
 //  UART_Init();
+
+  user_main_info("BLE entry sleep"); 
+  __HAL_RCC_GPIOA_CLK_ENABLE();
+  __HAL_RCC_GPIOB_CLK_ENABLE();
+  __HAL_RCC_GPIOC_CLK_ENABLE();
+  __HAL_RCC_GPIOH_CLK_ENABLE();
+  
+  GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Pin = GPIO_PIN_All;    
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct); 	
+  HAL_GPIO_Init(GPIOH, &GPIO_InitStruct);
+  GPIO_InitStruct.Pin = GPIO_PIN_All & ~GPIO_PIN_3;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+  GPIO_InitStruct.Pin = GPIO_PIN_All & ~GPIO_PIN_3;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+  
+  /* Disable GPIOs clock */
+  __HAL_RCC_GPIOC_CLK_DISABLE();
+  __HAL_RCC_GPIOB_CLK_DISABLE();
+  // __HAL_RCC_GPIOA_CLK_DISABLE();  
+  __HAL_RCC_GPIOH_CLK_DISABLE();
   
   sleep_BLE_Uartconfig();
-  
-//  user_main_info("BLE entry sleep"); 
-//  __HAL_RCC_GPIOA_CLK_ENABLE();
-//  __HAL_RCC_GPIOB_CLK_ENABLE();
-//  __HAL_RCC_GPIOC_CLK_ENABLE();
-//  __HAL_RCC_GPIOH_CLK_ENABLE();
-//  
-//  GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
-//  GPIO_InitStruct.Pull = GPIO_NOPULL;
-//  GPIO_InitStruct.Pin = GPIO_PIN_All;    
-//  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct); 	
-//  HAL_GPIO_Init(GPIOH, &GPIO_InitStruct);
-//  GPIO_InitStruct.Pin = GPIO_PIN_All & ~GPIO_PIN_3;
-//  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-//  GPIO_InitStruct.Pin = GPIO_PIN_All & ~GPIO_PIN_3;
-//  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-//  
-//  /* Disable GPIOs clock */
-//  __HAL_RCC_GPIOC_CLK_DISABLE();
-//  __HAL_RCC_GPIOB_CLK_DISABLE();
-//  // __HAL_RCC_GPIOA_CLK_DISABLE();  
-//  __HAL_RCC_GPIOH_CLK_DISABLE();	
-    
+      
   HAL_SuspendTick();    
   HAL_PWR_DeInit();
   HAL_PWR_DisablePVD();
@@ -292,12 +340,14 @@ void Lpower_sleep_config(void)
   HAL_ResumeTick();    
 //  HAL_Init();
   SystemClock_Config();
+  MX_GPIO_Init();  
   UART_Init();
   SPI_Init();
+  ADC_Init();
 //  GPIO_Init();
 //  MX_USART2_UART_Init(); 
 //  HAL_UART_Receive_IT(&_BLE_USART, &indata, 1);  
-  // HAL_NVIC_DisableIRQ(EXTI3_IRQn);      
+//  HAL_NVIC_DisableIRQ(EXTI3_IRQn);      
 //  MX_RTC_Init();  
   user_main_info("wake up!!!"); 
   
