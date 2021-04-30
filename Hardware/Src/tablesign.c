@@ -438,6 +438,9 @@ void Display_Pic_Write(TableFace fac, uint8_t pict, uint8_t *data)
     }
   }
   redaddr = Get_pic_Addr(fac, pict,RedColorPic);
+  afterdaddr = 0;
+  beforaddr = 0;
+  picfd = 0;
   {
     /*写红色到屏幕*/
     TableSignWriteByte(fac,SendCmd,0x13);
@@ -454,7 +457,7 @@ void Display_Pic_Write(TableFace fac, uint8_t pict, uint8_t *data)
           if(afterdaddr == beforaddr)
           {
             /*读取两个字节*/
-            W25X_BufferRead(rxdat5,wbaddr+picfd*2,2);   
+            W25X_BufferRead(rxdat5,redaddr+picfd*2,2);   
             //  user_main_debug("flash data %02x %02x",rxdat5[0],rxdat5[1]);         
             beforaddr = rxdat5[1] + afterdaddr;
             picfd++;

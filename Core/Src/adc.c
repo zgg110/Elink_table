@@ -21,7 +21,7 @@
 #include "adc.h"
 
 /* USER CODE BEGIN 0 */
-
+#include "cmsis_os.h"
 /* USER CODE END 0 */
 
 ADC_HandleTypeDef hadc1;
@@ -84,7 +84,7 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef* adcHandle)
     PB1     ------> ADC1_IN16
     */
     GPIO_InitStruct.Pin = GPIO_PIN_1;
-    GPIO_InitStruct.Mode = GPIO_MODE_ANALOG_ADC_CONTROL;
+    GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
@@ -133,11 +133,24 @@ void End_ADC1_work(void)
 /*获取ADC采集数据*/
 uint32_t Get_ADC1_Value(void)
 {
-  HAL_ADC_PollForConversion(&hadc1,10);
+  HAL_ADC_PollForConversion(&hadc1,100);
   if(HAL_IS_BIT_SET(HAL_ADC_GetState(&hadc1), HAL_ADC_STATE_REG_EOC))
+  {
     return HAL_ADC_GetValue(&hadc1);
+  }
   else 
     return 0;
+}
+
+/*获取精准电压�?*/
+uint32_t Get_Bat_Value(void)
+{
+  uint32_t val=0;
+  Start_ADC1_work();
+  val = Get_ADC1_Value();
+//  val = (3000*Get_ADC1_Value()*VREFINT_CAL)/(VREFINT_CAL_VREF*4095);
+  End_ADC1_work();
+  return val;
 }
 
 /*端口初始�?*/

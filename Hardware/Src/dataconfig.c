@@ -527,12 +527,12 @@ void Pul_Cmd_Analyze(uint8_t *indat, uint32_t inlen, uint8_t *outdat, uint32_t *
 {
   uint32_t batval = 0;
   
-  switch ((CmdType_f)*(indat+1))
+  switch ((CmdType_f)*(indat+4))
   {
   /*版本号*/
   case Dversion:
     /*内部判断是设置还是查询*/
-    if((Workcmd_f)*(indat+2) == Watchcmd)
+    if((Workcmd_f)*(indat+5) == Watchcmd)
     {
       outdat[0] = Dversion;
       outdat[1] = Watchcmd;
@@ -550,7 +550,7 @@ void Pul_Cmd_Analyze(uint8_t *indat, uint32_t inlen, uint8_t *outdat, uint32_t *
   /*信号强度*/
   case Drssi:
     /*内部判断是设置还是查询*/
-    if((Workcmd_f)*(indat+2) == Watchcmd)
+    if((Workcmd_f)*(indat+5) == Watchcmd)
       ;
     else
       ;    
@@ -558,11 +558,16 @@ void Pul_Cmd_Analyze(uint8_t *indat, uint32_t inlen, uint8_t *outdat, uint32_t *
   /*电池电量*/  
   case Dbattery:
     /*内部判断是设置还是查询*/
-    if((Workcmd_f)*(indat+2) == Watchcmd)
+    if((Workcmd_f)*(indat+5) == Watchcmd)
     {
-      Start_ADC1_work();
-      batval = Get_ADC1_Value();
-      End_ADC1_work();
+//      Start_ADC1_work();
+//      batval = Get_ADC1_Value();
+//      End_ADC1_work();
+//      batval = (batval*1000/4095)*3;
+      batval = Get_Bat_Value() * 2;
+      outdat[0] = batval >> 8;
+      outdat[1] = batval;
+      *outlen = 2;      
       user_main_debug("%d",batval);
     }
     else
@@ -571,7 +576,7 @@ void Pul_Cmd_Analyze(uint8_t *indat, uint32_t inlen, uint8_t *outdat, uint32_t *
   /*设备ID号*/
   case DevID:
     /*内部判断是设置还是查询*/
-    if((Workcmd_f)*(indat+2) == Watchcmd)
+    if((Workcmd_f)*(indat+5) == Watchcmd)
     {
       outdat[0] = DevID;
       outdat[1] = Watchcmd;
@@ -763,7 +768,7 @@ void Analyze_Wirle_Data(uint8_t *dat, uint32_t datlen)
        ackdata[13]=(uint8_t)sCRC;
        ackdata[14]=0xEE;
        ackdata[15]=0x00;                
-       BLE_Answer_Data(ackdata,16);      
+       BLE_Answer_Data(ackdata,15);      
       break;
     case CmdB:
       ackdata[1]=CmdcallB;
@@ -809,11 +814,11 @@ void Analyze_Wirle_Data(uint8_t *dat, uint32_t datlen)
 **********************************************************************************/
 void Rev_DataAnalye(EXTEVENT pevent, uint8_t *rdata, uint32_t rlen)
 {
-//   /*打印接收数据LOG*/
-//   LOG("ble RX:");
-//   for(int i=0;i<rlen;i++)
-//     LOG(" %002x",rdata[i]);
-//   LOG("\r\n");      
+   /*打印接收数据LOG*/
+   LOG("ble RX:");
+   for(int i=0;i<rlen;i++)
+     LOG(" %002x",rdata[i]);
+   LOG("\r\n");      
   
   /*判断接收到的数据是否符合正常数据长度，如果不符合可以直接PASS掉*/
   if(rlen > 5)

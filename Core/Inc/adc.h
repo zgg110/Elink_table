@@ -33,7 +33,7 @@
 extern ADC_HandleTypeDef hadc1;
 
 /* USER CODE BEGIN Private defines */
-
+#define VREFINT_CAL  *VREFINT_CAL_ADDR
 /* USER CODE END Private defines */
 
 void MX_ADC1_Init(void);
@@ -45,6 +45,8 @@ void End_ADC1_work(void);
 
 void ADC_Init(void);
 void ADC_DeInit(void);
+
+uint32_t Get_Bat_Value(void);
 /* USER CODE END Prototypes */
 
 #ifdef __cplusplus
