@@ -1,73 +1,73 @@
 ###############################################################################
 #
-# IAR ELF Linker V8.32.3.193/W32 for ARM                  30/Apr/2021  08:21:38
+# IAR ELF Linker V8.32.3.193/W32 for ARM                  28/Jun/2021  12:14:19
 # Copyright 2007-2019 IAR Systems AB.
 #
-#    Output file  =  G:\test\testtable\Elink_table\EWARM\eTable\Exe\eTable.out
-#    Map file     =  G:\test\testtable\Elink_table\EWARM\eTable\List\eTable.map
+#    Output file  =  E:\MYGITHUB\Elink_table\EWARM\eTable\Exe\eTable.out
+#    Map file     =  E:\MYGITHUB\Elink_table\EWARM\eTable\List\eTable.map
 #    Command line =  
-#        -f C:\Users\LY-PC\AppData\Local\Temp\EW9499.tmp
-#        (G:\test\testtable\Elink_table\EWARM\eTable\Obj\adc.o
-#        G:\test\testtable\Elink_table\EWARM\eTable\Obj\blecomm.o
-#        G:\test\testtable\Elink_table\EWARM\eTable\Obj\cmsis_os2.o
-#        G:\test\testtable\Elink_table\EWARM\eTable\Obj\croutine.o
-#        G:\test\testtable\Elink_table\EWARM\eTable\Obj\dataconfig.o
-#        G:\test\testtable\Elink_table\EWARM\eTable\Obj\event_groups.o
-#        G:\test\testtable\Elink_table\EWARM\eTable\Obj\FontOpt.o
-#        G:\test\testtable\Elink_table\EWARM\eTable\Obj\freertos.o
-#        G:\test\testtable\Elink_table\EWARM\eTable\Obj\gpio.o
-#        G:\test\testtable\Elink_table\Drivers\LIB\GT60L16M2K4_STM32L431CC_iar832_1629.a
-#        G:\test\testtable\Elink_table\EWARM\eTable\Obj\GT60M2.o
-#        G:\test\testtable\Elink_table\EWARM\eTable\Obj\heap_4.o
-#        G:\test\testtable\Elink_table\EWARM\eTable\Obj\list.o
-#        G:\test\testtable\Elink_table\EWARM\eTable\Obj\main.o
-#        G:\test\testtable\Elink_table\EWARM\eTable\Obj\mbcrc.o
-#        G:\test\testtable\Elink_table\EWARM\eTable\Obj\port.o
-#        G:\test\testtable\Elink_table\EWARM\eTable\Obj\portasm.o
-#        G:\test\testtable\Elink_table\EWARM\eTable\Obj\queue.o
-#        G:\test\testtable\Elink_table\EWARM\eTable\Obj\rtc.o
-#        G:\test\testtable\Elink_table\EWARM\eTable\Obj\spi.o
-#        G:\test\testtable\Elink_table\EWARM\eTable\Obj\startup_stm32l431xx.o
-#        G:\test\testtable\Elink_table\EWARM\eTable\Obj\stm32l4xx_hal.o
-#        G:\test\testtable\Elink_table\EWARM\eTable\Obj\stm32l4xx_hal_adc.o
-#        G:\test\testtable\Elink_table\EWARM\eTable\Obj\stm32l4xx_hal_adc_ex.o
-#        G:\test\testtable\Elink_table\EWARM\eTable\Obj\stm32l4xx_hal_cortex.o
-#        G:\test\testtable\Elink_table\EWARM\eTable\Obj\stm32l4xx_hal_dma.o
-#        G:\test\testtable\Elink_table\EWARM\eTable\Obj\stm32l4xx_hal_dma_ex.o
-#        G:\test\testtable\Elink_table\EWARM\eTable\Obj\stm32l4xx_hal_exti.o
-#        G:\test\testtable\Elink_table\EWARM\eTable\Obj\stm32l4xx_hal_flash.o
-#        G:\test\testtable\Elink_table\EWARM\eTable\Obj\stm32l4xx_hal_flash_ex.o
-#        G:\test\testtable\Elink_table\EWARM\eTable\Obj\stm32l4xx_hal_flash_ramfunc.o
-#        G:\test\testtable\Elink_table\EWARM\eTable\Obj\stm32l4xx_hal_gpio.o
-#        G:\test\testtable\Elink_table\EWARM\eTable\Obj\stm32l4xx_hal_i2c.o
-#        G:\test\testtable\Elink_table\EWARM\eTable\Obj\stm32l4xx_hal_i2c_ex.o
-#        G:\test\testtable\Elink_table\EWARM\eTable\Obj\stm32l4xx_hal_msp.o
-#        G:\test\testtable\Elink_table\EWARM\eTable\Obj\stm32l4xx_hal_pwr.o
-#        G:\test\testtable\Elink_table\EWARM\eTable\Obj\stm32l4xx_hal_pwr_ex.o
-#        G:\test\testtable\Elink_table\EWARM\eTable\Obj\stm32l4xx_hal_rcc.o
-#        G:\test\testtable\Elink_table\EWARM\eTable\Obj\stm32l4xx_hal_rcc_ex.o
-#        G:\test\testtable\Elink_table\EWARM\eTable\Obj\stm32l4xx_hal_rtc.o
-#        G:\test\testtable\Elink_table\EWARM\eTable\Obj\stm32l4xx_hal_rtc_ex.o
-#        G:\test\testtable\Elink_table\EWARM\eTable\Obj\stm32l4xx_hal_spi.o
-#        G:\test\testtable\Elink_table\EWARM\eTable\Obj\stm32l4xx_hal_spi_ex.o
-#        G:\test\testtable\Elink_table\EWARM\eTable\Obj\stm32l4xx_hal_tim.o
-#        G:\test\testtable\Elink_table\EWARM\eTable\Obj\stm32l4xx_hal_tim_ex.o
-#        G:\test\testtable\Elink_table\EWARM\eTable\Obj\stm32l4xx_hal_timebase_tim.o
-#        G:\test\testtable\Elink_table\EWARM\eTable\Obj\stm32l4xx_hal_uart.o
-#        G:\test\testtable\Elink_table\EWARM\eTable\Obj\stm32l4xx_hal_uart_ex.o
-#        G:\test\testtable\Elink_table\EWARM\eTable\Obj\stm32l4xx_it.o
-#        G:\test\testtable\Elink_table\EWARM\eTable\Obj\stream_buffer.o
-#        G:\test\testtable\Elink_table\EWARM\eTable\Obj\system_stm32l4xx.o
-#        G:\test\testtable\Elink_table\EWARM\eTable\Obj\tablesign.o
-#        G:\test\testtable\Elink_table\EWARM\eTable\Obj\tasks.o
-#        G:\test\testtable\Elink_table\EWARM\eTable\Obj\timers.o
-#        G:\test\testtable\Elink_table\EWARM\eTable\Obj\usart.o
-#        G:\test\testtable\Elink_table\EWARM\eTable\Obj\w25q128.o --redirect
+#        -f C:\Users\LY\AppData\Local\Temp\EWFCD.tmp
+#        (E:\MYGITHUB\Elink_table\EWARM\eTable\Obj\adc.o
+#        E:\MYGITHUB\Elink_table\EWARM\eTable\Obj\blecomm.o
+#        E:\MYGITHUB\Elink_table\EWARM\eTable\Obj\cmsis_os2.o
+#        E:\MYGITHUB\Elink_table\EWARM\eTable\Obj\croutine.o
+#        E:\MYGITHUB\Elink_table\EWARM\eTable\Obj\dataconfig.o
+#        E:\MYGITHUB\Elink_table\EWARM\eTable\Obj\event_groups.o
+#        E:\MYGITHUB\Elink_table\EWARM\eTable\Obj\FontOpt.o
+#        E:\MYGITHUB\Elink_table\EWARM\eTable\Obj\freertos.o
+#        E:\MYGITHUB\Elink_table\EWARM\eTable\Obj\gpio.o
+#        E:\MYGITHUB\Elink_table\Drivers\LIB\GT60L16M2K4_STM32L431CC_iar832_1629.a
+#        E:\MYGITHUB\Elink_table\EWARM\eTable\Obj\GT60M2.o
+#        E:\MYGITHUB\Elink_table\EWARM\eTable\Obj\heap_4.o
+#        E:\MYGITHUB\Elink_table\EWARM\eTable\Obj\list.o
+#        E:\MYGITHUB\Elink_table\EWARM\eTable\Obj\main.o
+#        E:\MYGITHUB\Elink_table\EWARM\eTable\Obj\mbcrc.o
+#        E:\MYGITHUB\Elink_table\EWARM\eTable\Obj\port.o
+#        E:\MYGITHUB\Elink_table\EWARM\eTable\Obj\portasm.o
+#        E:\MYGITHUB\Elink_table\EWARM\eTable\Obj\queue.o
+#        E:\MYGITHUB\Elink_table\EWARM\eTable\Obj\rtc.o
+#        E:\MYGITHUB\Elink_table\EWARM\eTable\Obj\spi.o
+#        E:\MYGITHUB\Elink_table\EWARM\eTable\Obj\startup_stm32l431xx.o
+#        E:\MYGITHUB\Elink_table\EWARM\eTable\Obj\stm32l4xx_hal.o
+#        E:\MYGITHUB\Elink_table\EWARM\eTable\Obj\stm32l4xx_hal_adc.o
+#        E:\MYGITHUB\Elink_table\EWARM\eTable\Obj\stm32l4xx_hal_adc_ex.o
+#        E:\MYGITHUB\Elink_table\EWARM\eTable\Obj\stm32l4xx_hal_cortex.o
+#        E:\MYGITHUB\Elink_table\EWARM\eTable\Obj\stm32l4xx_hal_dma.o
+#        E:\MYGITHUB\Elink_table\EWARM\eTable\Obj\stm32l4xx_hal_dma_ex.o
+#        E:\MYGITHUB\Elink_table\EWARM\eTable\Obj\stm32l4xx_hal_exti.o
+#        E:\MYGITHUB\Elink_table\EWARM\eTable\Obj\stm32l4xx_hal_flash.o
+#        E:\MYGITHUB\Elink_table\EWARM\eTable\Obj\stm32l4xx_hal_flash_ex.o
+#        E:\MYGITHUB\Elink_table\EWARM\eTable\Obj\stm32l4xx_hal_flash_ramfunc.o
+#        E:\MYGITHUB\Elink_table\EWARM\eTable\Obj\stm32l4xx_hal_gpio.o
+#        E:\MYGITHUB\Elink_table\EWARM\eTable\Obj\stm32l4xx_hal_i2c.o
+#        E:\MYGITHUB\Elink_table\EWARM\eTable\Obj\stm32l4xx_hal_i2c_ex.o
+#        E:\MYGITHUB\Elink_table\EWARM\eTable\Obj\stm32l4xx_hal_msp.o
+#        E:\MYGITHUB\Elink_table\EWARM\eTable\Obj\stm32l4xx_hal_pwr.o
+#        E:\MYGITHUB\Elink_table\EWARM\eTable\Obj\stm32l4xx_hal_pwr_ex.o
+#        E:\MYGITHUB\Elink_table\EWARM\eTable\Obj\stm32l4xx_hal_rcc.o
+#        E:\MYGITHUB\Elink_table\EWARM\eTable\Obj\stm32l4xx_hal_rcc_ex.o
+#        E:\MYGITHUB\Elink_table\EWARM\eTable\Obj\stm32l4xx_hal_rtc.o
+#        E:\MYGITHUB\Elink_table\EWARM\eTable\Obj\stm32l4xx_hal_rtc_ex.o
+#        E:\MYGITHUB\Elink_table\EWARM\eTable\Obj\stm32l4xx_hal_spi.o
+#        E:\MYGITHUB\Elink_table\EWARM\eTable\Obj\stm32l4xx_hal_spi_ex.o
+#        E:\MYGITHUB\Elink_table\EWARM\eTable\Obj\stm32l4xx_hal_tim.o
+#        E:\MYGITHUB\Elink_table\EWARM\eTable\Obj\stm32l4xx_hal_tim_ex.o
+#        E:\MYGITHUB\Elink_table\EWARM\eTable\Obj\stm32l4xx_hal_timebase_tim.o
+#        E:\MYGITHUB\Elink_table\EWARM\eTable\Obj\stm32l4xx_hal_uart.o
+#        E:\MYGITHUB\Elink_table\EWARM\eTable\Obj\stm32l4xx_hal_uart_ex.o
+#        E:\MYGITHUB\Elink_table\EWARM\eTable\Obj\stm32l4xx_it.o
+#        E:\MYGITHUB\Elink_table\EWARM\eTable\Obj\stream_buffer.o
+#        E:\MYGITHUB\Elink_table\EWARM\eTable\Obj\system_stm32l4xx.o
+#        E:\MYGITHUB\Elink_table\EWARM\eTable\Obj\tablesign.o
+#        E:\MYGITHUB\Elink_table\EWARM\eTable\Obj\tasks.o
+#        E:\MYGITHUB\Elink_table\EWARM\eTable\Obj\timers.o
+#        E:\MYGITHUB\Elink_table\EWARM\eTable\Obj\usart.o
+#        E:\MYGITHUB\Elink_table\EWARM\eTable\Obj\w25q128.o --redirect
 #        _Printf=_PrintfFull --redirect _Scanf=_ScanfFull --no_out_extension -o
-#        G:\test\testtable\Elink_table\EWARM\eTable\Exe\eTable.out --map
-#        G:\test\testtable\Elink_table\EWARM\eTable\List\eTable.map --config
-#        G:\test\testtable\Elink_table\EWARM/stm32l431xx_flash.icf
-#        --semihosting --entry __iar_program_start --vfe --text_out locale)
+#        E:\MYGITHUB\Elink_table\EWARM\eTable\Exe\eTable.out --map
+#        E:\MYGITHUB\Elink_table\EWARM\eTable\List\eTable.map --config
+#        E:\MYGITHUB\Elink_table\EWARM/stm32l431xx_flash.icf --semihosting
+#        --entry __iar_program_start --vfe --text_out locale)
 #
 ###############################################################################
 
@@ -485,7 +485,7 @@ command line/config:
     -------------------------------------------------------
     Total:
 
-G:\test\testtable\Elink_table\EWARM\eTable\Obj: [1]
+E:\MYGITHUB\Elink_table\EWARM\eTable\Obj: [1]
     FontOpt.o                         492
     GT60M2.o                          154
     adc.o                             372               100
@@ -1183,7 +1183,7 @@ yEnd                    0x2000'98dc     0x1  Data  Lc  GT60L16M2K4.o [2]
 yStart                  0x2000'98da     0x1  Data  Lc  GT60L16M2K4.o [2]
 
 
-[1] = G:\test\testtable\Elink_table\EWARM\eTable\Obj
+[1] = E:\MYGITHUB\Elink_table\EWARM\eTable\Obj
 [2] = GT60L16M2K4_STM32L431CC_iar832_1629.a
 [3] = dl7M_tlf.a
 [4] = m7M_tls.a

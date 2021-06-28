@@ -1013,7 +1013,7 @@
                     <item>indat[1]</item>
                     <item>ackdata</item>
                     <item>VREFINT_CAL</item>
-                    <item></item>
+                    <item />
                 </expressions>
                 <col-names>
                     <item>Expression</item>

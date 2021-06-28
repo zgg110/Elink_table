@@ -486,13 +486,13 @@ uint32_t Get_pic_Addr(TableFace fac, uint8_t pictil, TableColorType col)
   if(pictil == 0)
   {
     if(fac == TabFaceB)
-      return B_PICADDRBASE + (col*12*4096);
+      return B_PICADDRBASE + (col*24*4096);
     else
-      return A_PICADDRBASE + (col*12*4096);
+      return A_PICADDRBASE + (col*24*4096);
   }
   else
   {
-    return B_PICADDRBASE + (pictil*24*4096) + (col*12*4096);
+    return B_PICADDRBASE + (pictil*48*4096) + (col*24*4096);
   }
 }
 

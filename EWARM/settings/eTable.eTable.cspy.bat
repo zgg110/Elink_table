@@ -25,7 +25,7 @@ if not "%~1" == "" goto debugFile
 
 @echo on 
 
-"D:\Program Files (x86)\IAR Systems\Embedded Workbench 8.2\common\bin\cspybat" -f "G:\test\testtable\Elink_table\EWARM\settings\eTable.eTable.general.xcl" --backend -f "G:\test\testtable\Elink_table\EWARM\settings\eTable.eTable.driver.xcl" 
+"D:\Program Files (x86)\IAR Systems\Embedded Workbench 8.2\common\bin\cspybat" -f "E:\MYGITHUB\Elink_table\EWARM\settings\eTable.eTable.general.xcl" --backend -f "E:\MYGITHUB\Elink_table\EWARM\settings\eTable.eTable.driver.xcl" 
 
 @echo off 
 goto end 
@@ -34,7 +34,7 @@ goto end
 
 @echo on 
 
-"D:\Program Files (x86)\IAR Systems\Embedded Workbench 8.2\common\bin\cspybat" -f "G:\test\testtable\Elink_table\EWARM\settings\eTable.eTable.general.xcl" "--debug_file=%~1" --backend -f "G:\test\testtable\Elink_table\EWARM\settings\eTable.eTable.driver.xcl" 
+"D:\Program Files (x86)\IAR Systems\Embedded Workbench 8.2\common\bin\cspybat" -f "E:\MYGITHUB\Elink_table\EWARM\settings\eTable.eTable.general.xcl" "--debug_file=%~1" --backend -f "E:\MYGITHUB\Elink_table\EWARM\settings\eTable.eTable.driver.xcl" 
 
 @echo off 
 :end
