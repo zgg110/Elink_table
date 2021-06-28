@@ -740,8 +740,8 @@ void Analyze_Wirle_Data(uint8_t *dat, uint32_t datlen)
       break;
     case PictureAB:
       /*如果没有输入文字，则只是显示图片*/
-      if(eDisplay_Data.DATAMODA == 0)
-        eDisplay_Data.DATAMODA = OnlyPic;      
+      if(eDisplay_Data.DATAMODAB == 0)
+        eDisplay_Data.DATAMODAB = OnlyPic;      
     /*应答AB面投图数据*/
       ackdata[1]=PicturecallAB; 
       ackdata[4]=0x01;
