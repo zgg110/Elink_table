@@ -47,21 +47,30 @@ void InputTexttoFlash(Fontsparam fontdata)
   /*清空取字体值前的整体数据*/
   memset(pBits,0,192*192/8);
   // TableSectorErase();
+  uint32_t Textcnt = 0;
+  uint32_t Asciicnt = 0;  
   for(int q=0;q<fontdata.Textcount;q++)
   {
     if(fontdata.Textdata[2*q] == 0x00)
+    {
       get_font(pBits,VEC_HZ_ASCII_STY,0,fontdata.Textdata[2*q+1],fontdata.Textsize, fontdata.Textsize, fontdata.Textsize);
+      if(Asciicnt == 0) Asciicnt=1;
+      Asciicnt++;      
+    }
     else
+    {
       get_font(pBits,fontdata.TextFont,fontdata.Textdata[2*q],fontdata.Textdata[2*q+1],fontdata.Textsize, fontdata.Textsize, fontdata.Textsize);
+      Textcnt++;
+    }
     for(int m=0;m<(fontdata.Textsize*fontdata.Textsize/8);m++)pBits[m]=~pBits[m];   
+    
+    
     for(i=0;i<fontdata.Textsize;i++)
     {
       /* 文字与字母的字体间隔不同需要区分对待 */
       uint32_t addr = (((fontdata.Textlocat/TABLEROW)+i)*TABLEROW) + fontdata.Textlocat%TABLEROW;  //BLACKTEXTBASE  + (q*fontdata.Textsize/8) +  
-      if(fontdata.Textdata[2*q] != 0x00)
-        addr += (q*fontdata.Textsize/8);
-      else
-        addr += (q*fontdata.Textsize/16);
+      
+      addr = addr + ((Textcnt-1)*fontdata.Textsize/8) + (Asciicnt*fontdata.Textsize/16);
 
       /*判断A面与B面 设置字体文字颜色*/
       if(fontdata.Texttableface == 0x03)
