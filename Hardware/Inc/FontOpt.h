@@ -19,18 +19,19 @@
 #define   TABLEROW       100    //像素实际为8*100
 #define   TABLECOLUMN    480
 
+
 /*黑白红色文字基础值*/
 #define   A_BLACKTEXTBASE  0x00000000
 #define   A_WHITETEXTBASE  0x0000C000
 #define   A_REDTEXTBASE    0x00018000
 #define   A_PICADDRBASE    0x00024000
 
-#define   B_BLACKTEXTBASE  0x00048000
-#define   B_WHITETEXTBASE  0x00054000
-#define   B_REDTEXTBASE    0x00060000
-#define   B_PICADDRBASE    0x0006C000
+#define   B_BLACKTEXTBASE  0x00054000
+#define   B_WHITETEXTBASE  0x00060000
+#define   B_REDTEXTBASE    0x0006C000
+#define   B_PICADDRBASE    0x00078000
 
-#define   P_PICADDRBASE    0x00090000
+#define   P_PICADDRBASE    0x00A80000
 
 typedef struct BlackPicBlock_t{
 

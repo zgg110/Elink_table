@@ -403,7 +403,7 @@ int Picture_param_write(TableFace fac, uint8_t *dat, uint32_t datlen)
       firstaddr=Get_pic_Addr(fac, plist,(TableColorType)(pcolor-1));
       nextaddr = firstaddr;
       /*擦除对应地址上的图片数据*/
-      TableSectorErase(nextaddr,12);
+      TableSectorErase(nextaddr,24);
       /*跳过文字显示图片*/
       if( PicandTextflag != 1)
       {
