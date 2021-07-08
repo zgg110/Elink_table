@@ -10,7 +10,7 @@
 #include "GT60M2.h"
 //#include "flashConfig.h"
 //#include "blecomm.h"
-#include "dataconfig.h"
+//#include "dataconfig.h"
 //#include "FontOpt.h"
 
 /*是否正在投屏显示标志位 置位为1*/
