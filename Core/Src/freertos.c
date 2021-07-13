@@ -247,7 +247,7 @@ void configdisTask(void *argument)
       connttimeout++;
       user_main_info("BLE connect timeout %d",connttimeout);
       /*如果断开设备之后6秒，则进入显示设备消息显�?*/
-      if(connttimeout > 4)
+      if(connttimeout > 1)
       {
         if(eDisplay_Data.WIRTEDAT == 1)
           memset(&eDisplay_Data,0,sizeof(eDisplay_Data));          

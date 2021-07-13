@@ -23,9 +23,9 @@
 
 if ($debugfile -eq "")
 {
-& "D:\Program Files (x86)\IAR Systems\Embedded Workbench 8.2\common\bin\cspybat" -f "G:\mygithub\Elink_table\EWARM\settings\eTable.eTable.general.xcl" --backend -f "G:\mygithub\Elink_table\EWARM\settings\eTable.eTable.driver.xcl" 
+& "D:\Program Files (x86)\IAR Systems\Embedded Workbench 8.2\common\bin\cspybat" -f "E:\MYGITHUB\Elink_table\EWARM\settings\eTable.eTable.general.xcl" --backend -f "E:\MYGITHUB\Elink_table\EWARM\settings\eTable.eTable.driver.xcl" 
 }
 else
 {
-& "D:\Program Files (x86)\IAR Systems\Embedded Workbench 8.2\common\bin\cspybat" -f "G:\mygithub\Elink_table\EWARM\settings\eTable.eTable.general.xcl" --debug_file=$debugfile --backend -f "G:\mygithub\Elink_table\EWARM\settings\eTable.eTable.driver.xcl" 
+& "D:\Program Files (x86)\IAR Systems\Embedded Workbench 8.2\common\bin\cspybat" -f "E:\MYGITHUB\Elink_table\EWARM\settings\eTable.eTable.general.xcl" --debug_file=$debugfile --backend -f "E:\MYGITHUB\Elink_table\EWARM\settings\eTable.eTable.driver.xcl" 
 }
